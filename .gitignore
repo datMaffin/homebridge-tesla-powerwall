@@ -57,3 +57,8 @@ typings/
 # dotenv environment variables file
 .env
 
+# Vim swap files
+*.swp
+
+# macOS 
+.DS_Store
