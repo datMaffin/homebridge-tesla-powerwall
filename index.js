@@ -3,6 +3,7 @@
 var Accessory, Characteristic, Service, UUIDGen;
 var inherits = require('util').inherits;
 var request = require('request');
+var moment = require('moment');
 
 module.exports = function(homebridge) {
     Service = homebridge.hap.Service;
@@ -20,11 +21,19 @@ module.exports = function(homebridge) {
 function TeslaPowerwall(log, config) {
     this.log = log;
 
+    if (!this.log.debug) {
+        this.log.debug = function(){};
+    }
+
     //-----------------------------------------------------------------------//
     // Load configs
     //-----------------------------------------------------------------------//
-    var ip = config.ip || '127.0.0.1';
-    var address = 'http://' + ip + ':80';
+    this.name = config.name;
+
+    var ip      = config.ip || '127.0.0.1';
+    var port    = config.port || '80';
+    var address = 'http://' + ip + ':' + port;
+
     this.percentageUrl = address + '/api/system_status/soe';
     this.aggregateUrl  = address + '/api/meters/aggregates';
     this.sitemasterUrl = address + '/api/sitemaster';
@@ -32,8 +41,8 @@ function TeslaPowerwall(log, config) {
     this.startUrl      = address + '/api/sitemaster/start';
 
     // In milliseconds
-    this.updateIntervall  = config.updateIntervall || 1000 * 15;
-    this.historyIntervall = config.histeroyIntervall || 1000 * 60 * 5;
+    this.pollingIntervall = config.pollingIntervall || 1000 * 15;
+    this.historyIntervall = config.historyIntervall || 1000 * 60 * 5;
 
     //-----------------------------------------------------------------------//
     // Setup Eve Characteristics and Services
@@ -108,6 +117,26 @@ TeslaPowerwall.prototype = {
     accessories: function(callback) {
         var accessories = [];
 
+        // Powerwall:
+        var percentageGetter = new ValueGetter(
+            this.log, this.percentageUrl, 'percentage', 0);
+        var statusGetter = new ValueGetter(
+            this.log, this.sitemasterUrl, 'running', false);
+        var powerwallConfig = {
+            name:             'Powerwall',
+            percentageGetter: percentageGetter,
+            statusGetter:     statusGetter,
+            pollingIntervall: this.pollingIntervall,
+            historyIntervall: this.historyIntervall
+        };
+        accessories.push(new Powerwall(this.log, powerwallConfig));
+
+        // TODO:
+        // - Solar Powermeter
+        // - Grid Powermeter
+        // - Battery Powermeter
+        // - Home Powermeter
+
         callback(accessories);
     }
 };
@@ -120,17 +149,73 @@ TeslaPowerwall.prototype = {
 // Powerwall
 function Powerwall(log, config) {
     this.log = log;
+
+    this.name = config.name;
+    this.statusGetter = config.statusGetter;
+    this.percentageGetter = config.percentageGetter;
+
+    this.pollingIntervall = this.pollingIntervall;
 }
 
 Powerwall.prototype = {
 
     getServices: function() {
+        var services = [];
+
+        this.stateSwitch = new Service.Switch(this.name);
+        this.stateSwitch
+            .getCharacteristic(Characteristic.On)
+            .on('get', this.getStateSwitch.bind(this))
+            .on('set', this.setStateSwitch.bind(this));
+
+        services.push(this.stateSwitch);
+
+        this.battery = new Service.BatteryService(this.name + 'Battery');
+        this.battery
+            .getCharacteristic(Characteristic.BatteryLevel)
+            .on('get', this.getBattery.bind(this));
+        this.battery
+            .getCharacteristic(Characteristic.ChargingState)
+            .on('get', this.getChargingBattery.bind(this));
+        this.battery
+            .getCharacteristic(Characteristic.StatusLowBattery)
+            .on('get', this.getLowBattery.bind(this));
+
+
+        // TODO:
+        // - Polling
+        // - History
+
+        return services;
+    },
+
+    getStateSwitch: function(callback) {
+        this.statusGetter.requestValue(callback);
+    },
+
+    setStateSwitch: function(state, callback) {
+        callback();
+        reset(
+            this.stateSwitch, 
+            Characteristic.On, 
+            this.getStateSwitch.bind(this), 
+            1000 * 4);
+    },
+
+    getBattery: function(callback) {
+    },
+
+    getChargingBattery: function(callback) {
+    },
+
+    getLowBattery: function(callback) {
     }
 };
 
 // PowerMeter
 function PowerMeter(log, config) {
     this.log = log;
+    this.valueGetter = config.valueGetter;
 }
 
 PowerMeter.prototype = {
@@ -138,7 +223,39 @@ PowerMeter.prototype = {
     getServices: function() {
     }
 };
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Cache
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+function Cache(valueGetter, time) {
+}
 
+Cache.prototype = {
+
+    getValue: function() {
+    }
+};
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Value Resetter
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+/**
+ *
+ */
+var reset = function(service, characteristic, getterByCallback, delay){
+    if (!delay) {
+        // default value without ECMAscript 6 features
+        delay = 1000;
+    }
+
+    setTimeout(function() {
+        getterByCallback(function(error, newValue) {
+            service
+                .getCharacteristic(characteristic)
+                .updateValue(newValue);
+        });
+    }, delay);
+};
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 // Value Getter
@@ -160,7 +277,7 @@ ValueGetter.prototype = {
             this.address,
             function(error, response, body) {
                 var result;
-                if (_checkRequestError(error, response, body)) {
+                if (_checkRequestError(this.log, error, response, body)) {
                     callback(error, this.defaultValue);
                 } else if ((typeof this.address) == 'string') {
                     var resultJSON = _parseJSON(body);
@@ -216,6 +333,11 @@ var _checkRequestError = function(log, error, response, body) {
         log('body: ', body);
         return true;
     }
+
+    log.debug('error: ', error);
+    log.debug('status code: ', response && response.statusCode);
+    log.debug('body: ', body);
+
     return false;
 };
 
