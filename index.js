@@ -5,6 +5,9 @@ var inherits = require('util').inherits;
 var request  = require('request');
 var moment   = require('moment');
 
+// used for internationalization
+var str;
+
 module.exports = function(homebridge) {
     Service        = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
@@ -44,7 +47,9 @@ function TeslaPowerwall(log, config) {
     this.pollingInterval = config.pollingInterval || 1000 * 15;
     this.historyInterval = config.historyInterval || 1000 * 60 * 5;
 
-    this.lowBattery       = config.lowBattery     || 20;
+    this.lowBattery      = config.lowBattery      || 20;
+
+    str = new Strings(config.language || 'en');
 
     //-----------------------------------------------------------------------//
     // Setup Eve Characteristics and Services
@@ -186,7 +191,8 @@ Powerwall.prototype = {
 
         services.push(this.stateSwitch);
 
-        this.battery = new Service.BatteryService(this.name + 'Battery');
+        this.battery = 
+            new Service.BatteryService(this.name + ' ' + str.s('Battery'));
         this.battery
             .getCharacteristic(Characteristic.BatteryLevel)
             .on('get', this.getBatteryLevel.bind(this));
@@ -198,7 +204,8 @@ Powerwall.prototype = {
             .on('get', this.getLowBattery.bind(this));
         services.push(this.battery);
 
-        this.batteryVisualizer = new Service.Lightbulb(this.name + 'Charge');
+        this.batteryVisualizer = 
+            new Service.Lightbulb(this.name + ' ' + str.s('Charge'));
         this.batteryVisualizer
             .getCharacteristic(Characteristic.On)
             .on('get', this.getOnBatteryVisualizer.bind(this))
@@ -216,8 +223,8 @@ Powerwall.prototype = {
 
         //
         // Polling
-        var onStatusLowCache = new Cache(this.onStatusGetter, this.pollingInterval);
-        onStatusLowCache.pollValue(function(error, value) {
+        var onStatusLowPolling = new Polling(this.onStatusGetter, this.pollingInterval);
+        onStatusLowPolling.pollValue(function(error, value) {
             this.log.debug('Callback on status cache');
 
             this.stateSwitch
@@ -225,8 +232,8 @@ Powerwall.prototype = {
                 .updateValue(value);
         }.bind(this));
 
-        var percentageCache = new Cache(this.percentageGetter, this.pollingInterval);
-        percentageCache.pollValue(function(error, value) {
+        var percentagePolling = new Polling(this.percentageGetter, this.pollingInterval);
+        percentagePolling.pollValue(function(error, value) {
             this.log.debug('Callback percentage cache');
 
             this.battery
@@ -247,8 +254,8 @@ Powerwall.prototype = {
                 .updateValue(value);
         }.bind(this));
 
-        var chargingCache = new Cache(this.chargingGetter, this.pollingInterval);
-        chargingCache.pollValue(function(error, value) {
+        var chargingPolling = new Polling(this.chargingGetter, this.pollingInterval);
+        chargingPolling.pollValue(function(error, value) {
             this.log.debug('Callback charging cache');
 
             this.battery
@@ -333,8 +340,14 @@ Powerwall.prototype = {
 
 // PowerMeter
 function PowerMeter(log, config) {
-    this.log         = log;
-    this.valueGetter = config.valueGetter;
+    this.log = log;
+
+    this.name             = config.name;
+    this.pollingInterval  = config.pollingInterval;
+    this.historyInterval  = config.historyInterval;
+    this.lowBattery       = config.lowBattery;
+
+    this.wattGetter       = config.wattGetter;
 }
 
 PowerMeter.prototype = {
@@ -344,13 +357,12 @@ PowerMeter.prototype = {
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Cache
+// Polling
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 // TODO:
 // - Documenting
 // - Testing
-// - guarantee that first update is completed
-function Cache(valueGetter, pollTimer) {
+function Polling(valueGetter, pollTimer) {
     if (!pollTimer) {
         // default value without ECMAscript 6 features
         pollTimer = 1000;
@@ -371,15 +383,7 @@ function Cache(valueGetter, pollTimer) {
     setInterval(this.update.bind(this), pollTimer);
 }
 
-Cache.prototype = {
-
-    getValue: function() {
-        return this.cache;
-    },
-
-    getValueCallback: function(callback) {
-        callback(this.error, this.cache);
-    },
+Polling.prototype = {
 
     pollValue: function(callback) {
         this.pollCallback = callback;
@@ -390,7 +394,7 @@ Cache.prototype = {
             this.cache = newValue;
             this.pollCallback(error, newValue);
         }.bind(this));
-    },
+    }
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -526,5 +530,34 @@ var _notTrueToDefault = function(stmt, defaultValue) {
         return stmt;
     }
     return defaultValue;
+};
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Localization
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+function Strings(lang) {
+    if (lang == 'de') {
+        this.lang = 'de';
+    } else {
+        this.lang = 'en';
+    }
+
+    this.dict = {
+        'Battery': {
+            'en': 'Battery',
+            'de': 'Batterie'
+        },
+        'Charge': {
+            'en': 'Charge',
+            'de': 'Ladezustand'
+        }
+    };
+}
+
+Strings.prototype.s = function(str) {
+    if (!this.dict[str][this.lang]) {
+        return str;
+    }
+    return this.dict[str][this.lang];
 };
 
