@@ -2,14 +2,15 @@
 
 var Accessory, Characteristic, Service, UUIDGen;
 var inherits = require('util').inherits;
-var request = require('request');
-var moment = require('moment');
+var request  = require('request');
+var moment   = require('moment');
+var Promise  = require('promise');
 
 module.exports = function(homebridge) {
-    Service = homebridge.hap.Service;
+    Service        = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
-    Accessory = homebridge.patformAccessory;
-    UUIDGen = homebridge.hap.uuid;
+    Accessory      = homebridge.patformAccessory;
+    UUIDGen        = homebridge.hap.uuid;
     homebridge.registerPlatform(
         'homebridge-tesla-powerwall', 'TeslaPowerwall', TeslaPowerwall);
 };
@@ -150,8 +151,8 @@ TeslaPowerwall.prototype = {
 function Powerwall(log, config) {
     this.log = log;
 
-    this.name = config.name;
-    this.statusGetter = config.statusGetter;
+    this.name             = config.name;
+    this.statusGetter     = config.statusGetter;
     this.percentageGetter = config.percentageGetter;
 
     this.pollingIntervall = this.pollingIntervall;
@@ -214,7 +215,7 @@ Powerwall.prototype = {
 
 // PowerMeter
 function PowerMeter(log, config) {
-    this.log = log;
+    this.log         = log;
     this.valueGetter = config.valueGetter;
 }
 
@@ -223,16 +224,73 @@ PowerMeter.prototype = {
     getServices: function() {
     }
 };
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 // Cache
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-function Cache(valueGetter, time) {
+// TODO:
+// - Documenting
+// - Testing
+function Cache(valueGetter, pollTimer) {
+    if (!pollTimer) {
+        // default value without ECMAscript 6 features
+        pollTimer = 1000;
+    }
+
+    this.nextUpdate  = moment().unix();
+    this.cache       = 0;
+    this.error       = null;
+    this.valueGetter = valueGetter;
+
+    this.waiting = [];
+
+    // TODO: guarantee that update was successful
+    this.update(); 
+
+    // start polling:
+    setInterval(this.update, pollTimer);
 }
 
 Cache.prototype = {
 
     getValue: function() {
-    }
+        return this.cache;
+    },
+
+    getValueCallback: function(callback) {
+        callback(this.error, this.cache);
+    },
+
+    pollValue: function(callback) {
+        this.waiting.push(callback);
+    },
+
+    update: function() {
+        var correctCachePromise = new Promise(function(resolve, reject) {
+            this.valueGetter.requestValue(function(error, newValue) {
+                this.cache = newValue;
+                if (!error) {
+                    resolve(null);
+                } else {
+                    reject(error);
+                }
+            }.bind(this));
+        }.bind(this));
+
+        correctCachePromise
+            .then(function() {
+                for(var callback in this.waiting) {
+                    this.error = null;
+                    callback(null, this.cache);
+                }
+            }.bind(this))
+            .catch(function(error) {
+                for(var callback in this.waiting) {
+                    this.error = error;
+                    callback(this.error, this.cache);
+                }
+            });
+    },
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -240,7 +298,8 @@ Cache.prototype = {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 /**
- *
+ * Resets a characteristic of a service by using a getter callback with a 
+ * specific delay
  */
 var reset = function(service, characteristic, getterByCallback, delay){
     if (!delay) {
