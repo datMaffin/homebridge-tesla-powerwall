@@ -4,7 +4,6 @@ var Accessory, Characteristic, Service, UUIDGen;
 var inherits = require('util').inherits;
 var request  = require('request');
 var moment   = require('moment');
-var Promise  = require('promise');
 
 module.exports = function(homebridge) {
     Service        = homebridge.hap.Service;
@@ -42,8 +41,10 @@ function TeslaPowerwall(log, config) {
     this.startUrl      = address + '/api/sitemaster/start';
 
     // In milliseconds
-    this.pollingIntervall = config.pollingIntervall || 1000 * 15;
-    this.historyIntervall = config.historyIntervall || 1000 * 60 * 5;
+    this.pollingInterval = config.pollingInterval || 1000 * 15;
+    this.historyInterval = config.historyInterval || 1000 * 60 * 5;
+
+    this.lowBattery       = config.lowBattery     || 20;
 
     //-----------------------------------------------------------------------//
     // Setup Eve Characteristics and Services
@@ -121,14 +122,18 @@ TeslaPowerwall.prototype = {
         // Powerwall:
         var percentageGetter = new ValueGetter(
             this.log, this.percentageUrl, 'percentage', 0);
-        var statusGetter = new ValueGetter(
+        var onStatusGetter = new ValueGetter(
             this.log, this.sitemasterUrl, 'running', false);
+        var chargingGetter = new ValueGetter(
+            this.log, this.aggregateUrl, ['battery', 'instant_power'], 0);
         var powerwallConfig = {
             name:             'Powerwall',
             percentageGetter: percentageGetter,
-            statusGetter:     statusGetter,
-            pollingIntervall: this.pollingIntervall,
-            historyIntervall: this.historyIntervall
+            onStatusGetter:   onStatusGetter,
+            chargingGetter:   chargingGetter,
+            pollingInterval:  this.pollingInterval,
+            historyInterval:  this.historyInterval,
+            lowBattery:       this.lowBattery
         };
         accessories.push(new Powerwall(this.log, powerwallConfig));
 
@@ -147,22 +152,32 @@ TeslaPowerwall.prototype = {
 // Accessories
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-// Powerwall
+
+// TODO:
+// - History
+// - Centralize Data conversion for polling and getting
+// - Move everything to cache? (have to guarantee that update was
+//   successfully executed
+//
 function Powerwall(log, config) {
     this.log = log;
 
     this.name             = config.name;
-    this.statusGetter     = config.statusGetter;
-    this.percentageGetter = config.percentageGetter;
+    this.pollingInterval  = config.pollingInterval;
+    this.historyInterval  = config.historyInterval;
+    this.lowBattery       = config.lowBattery;
 
-    this.pollingIntervall = this.pollingIntervall;
+    this.onStatusGetter   = config.onStatusGetter;
+    this.percentageGetter = config.percentageGetter;
+    this.chargingGetter   = config.chargingGetter;
 }
 
 Powerwall.prototype = {
 
     getServices: function() {
+        // Create services
         var services = [];
-
+        
         this.stateSwitch = new Service.Switch(this.name);
         this.stateSwitch
             .getCharacteristic(Characteristic.On)
@@ -174,24 +189,79 @@ Powerwall.prototype = {
         this.battery = new Service.BatteryService(this.name + 'Battery');
         this.battery
             .getCharacteristic(Characteristic.BatteryLevel)
-            .on('get', this.getBattery.bind(this));
+            .on('get', this.getBatteryLevel.bind(this));
         this.battery
             .getCharacteristic(Characteristic.ChargingState)
-            .on('get', this.getChargingBattery.bind(this));
+            .on('get', this.getChargingState.bind(this));
         this.battery
             .getCharacteristic(Characteristic.StatusLowBattery)
             .on('get', this.getLowBattery.bind(this));
+        services.push(this.battery);
+
+        this.batteryVisualizer = new Service.Lightbulb(this.name + 'Charge');
+        this.batteryVisualizer
+            .getCharacteristic(Characteristic.On)
+            .on('get', this.getOnBatteryVisualizer.bind(this))
+            .on('set', this.setOnBatteryVisualizer.bind(this));
+        this.batteryVisualizer
+            .getCharacteristic(Characteristic.Hue)
+            .on('get', this.getHueBatteryVisualizer.bind(this))
+            .on('set', this.setHueBatteryVisualizer.bind(this));
+        this.batteryVisualizer
+            .getCharacteristic(Characteristic.Brightness)
+            .on('get', this.getBrightnessBatteryVisualizer.bind(this))
+            .on('set', this.setBrightnessBatteryVisualizer.bind(this));
+        services.push(this.batteryVisualizer);
 
 
-        // TODO:
-        // - Polling
-        // - History
+        //
+        // Polling
+        var onStatusLowCache = new Cache(this.onStatusGetter, this.pollingInterval);
+        onStatusLowCache.pollValue(function(error, value) {
+            this.log.debug('Callback on status cache');
+
+            this.stateSwitch
+                .getCharacteristic(Characteristic.On)
+                .updateValue(value);
+        }.bind(this));
+
+        var percentageCache = new Cache(this.percentageGetter, this.pollingInterval);
+        percentageCache.pollValue(function(error, value) {
+            this.log.debug('Callback percentage cache');
+
+            this.battery
+                .getCharacteristic(Characteristic.BatteryLevel)
+                .updateValue(value);
+            this.battery
+                .getCharacteristic(Characteristic.StatusLowBattery)
+                .updateValue(value <= this.lowBattery);
+
+            this.batteryVisualizer
+                .getCharacteristic(Characteristic.On)
+                .updateValue(value != 0);
+            this.batteryVisualizer
+                .getCharacteristic(Characteristic.Hue)
+                .updateValue((value/100) * 120);
+            this.batteryVisualizer
+                .getCharacteristic(Characteristic.Brightness)
+                .updateValue(value);
+        }.bind(this));
+
+        var chargingCache = new Cache(this.chargingGetter, this.pollingInterval);
+        chargingCache.pollValue(function(error, value) {
+            this.log.debug('Callback charging cache');
+
+            this.battery
+                .getCharacteristic(Characteristic.ChargingState)
+                .updateValue(value < 0);
+        }.bind(this));
+
 
         return services;
     },
 
     getStateSwitch: function(callback) {
-        this.statusGetter.requestValue(callback);
+        this.onStatusGetter.requestValue(callback);
     },
 
     setStateSwitch: function(state, callback) {
@@ -203,13 +273,61 @@ Powerwall.prototype = {
             1000 * 4);
     },
 
-    getBattery: function(callback) {
+    getBatteryLevel: function(callback) {
+        this.percentageGetter.requestValue(callback);
     },
 
-    getChargingBattery: function(callback) {
+    getChargingState: function(callback) {
+        this.chargingGetter.requestValue(function(error, value) {
+            callback(error, value < 0);
+        }.bind(this));
     },
 
     getLowBattery: function(callback) {
+        this.percentageGetter.requestValue(function(error, value) {
+            callback(error, value <= this.lowBattery);
+        }.bind(this));
+    },
+
+    getOnBatteryVisualizer: function(callback) {
+        this.percentageGetter.requestValue(function(error, value) {
+            callback(error, value != 0);
+        }.bind(this));
+    },
+
+    setOnBatteryVisualizer: function(state, callback) {
+        callback();
+        reset(
+            this.batteryVisualizer, 
+            Characteristic.On, 
+            this.getOnBatteryVisualizer.bind(this), 
+            1000);
+    },
+    getHueBatteryVisualizer: function(callback) {
+        this.percentageGetter.requestValue(function(error, value) {
+            callback(error, (value/100) * 120 );
+        }.bind(this));
+    },
+
+    setHueBatteryVisualizer: function(state, callback) {
+        callback();
+        reset(
+            this.batteryVisualizer, 
+            Characteristic.Hue, 
+            this.getHueBatteryVisualizer.bind(this), 
+            1000);
+    },
+    getBrightnessBatteryVisualizer: function(callback) {
+        this.percentageGetter.requestValue(callback);
+    },
+
+    setBrightnessBatteryVisualizer: function(state, callback) {
+        callback();
+        reset(
+            this.batteryVisualizer, 
+            Characteristic.Brightness, 
+            this.getBrightnessBatteryVisualizer.bind(this), 
+            1000);
     }
 };
 
@@ -231,6 +349,7 @@ PowerMeter.prototype = {
 // TODO:
 // - Documenting
 // - Testing
+// - guarantee that first update is completed
 function Cache(valueGetter, pollTimer) {
     if (!pollTimer) {
         // default value without ECMAscript 6 features
@@ -244,11 +363,12 @@ function Cache(valueGetter, pollTimer) {
 
     this.waiting = [];
 
-    // TODO: guarantee that update was successful
+    this.pollCallback = function(){};
+
     this.update(); 
 
     // start polling:
-    setInterval(this.update, pollTimer);
+    setInterval(this.update.bind(this), pollTimer);
 }
 
 Cache.prototype = {
@@ -262,34 +382,14 @@ Cache.prototype = {
     },
 
     pollValue: function(callback) {
-        this.waiting.push(callback);
+        this.pollCallback = callback;
     },
 
     update: function() {
-        var correctCachePromise = new Promise(function(resolve, reject) {
-            this.valueGetter.requestValue(function(error, newValue) {
-                this.cache = newValue;
-                if (!error) {
-                    resolve(null);
-                } else {
-                    reject(error);
-                }
-            }.bind(this));
+        this.valueGetter.requestValue(function(error, newValue) {
+            this.cache = newValue;
+            this.pollCallback(error, newValue);
         }.bind(this));
-
-        correctCachePromise
-            .then(function() {
-                for(var callback in this.waiting) {
-                    this.error = null;
-                    callback(null, this.cache);
-                }
-            }.bind(this))
-            .catch(function(error) {
-                for(var callback in this.waiting) {
-                    this.error = error;
-                    callback(this.error, this.cache);
-                }
-            });
     },
 };
 
