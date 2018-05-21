@@ -9,11 +9,13 @@
 //
 // TODO:
 // - Replace Request with cached request
+// - Let User specify how many services
+// - Let User specify how to save power meter history
 //
 
 'use strict';
 
-var Accessory, Characteristic, Service, UUIDGen;
+var Characteristic, Service, FakeGatoHistoryService;
 var inherits = require('util').inherits;
 var request  = require('request');
 var moment   = require('moment');
@@ -24,8 +26,7 @@ var str;
 module.exports = function(homebridge) {
     Service        = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
-    Accessory      = homebridge.patformAccessory;
-    UUIDGen        = homebridge.hap.uuid;
+    FakeGatoHistoryService = require('fakegato-history')(homebridge);
     homebridge.registerPlatform(
         'homebridge-tesla-powerwall', 'TeslaPowerwall', TeslaPowerwall);
 };
@@ -115,11 +116,11 @@ function TeslaPowerwall(log, config) {
     inherits(Characteristic.ResetTotal, Characteristic);
 
     // Load custom (Eve) Services
-    Service.PowerMeterService = function(displayName, uuid, subtype) {
+    Service.PowerMeterService = function(name, uuid, subtype) {
         if (!uuid) {
             uuid =  '00000001-0000-1777-8000-775D67EC4377';
         }
-        Service.call(this, displayName, uuid, subtype);
+        Service.call(this, name, uuid, subtype);
         this.addCharacteristic(Characteristic.CurrentPowerConsumption);
         this.addCharacteristic(Characteristic.TotalConsumption);
         this.addCharacteristic(Characteristic.ResetTotal);
@@ -145,53 +146,58 @@ TeslaPowerwall.prototype = {
         var chargingGetter = new ValueGetter(
             this.log, this.aggregateUrl, ['battery', 'instant_power'], 0);
         var powerwallConfig = {
-            name:             'Powerwall',
+            displayName:      'Powerwall',
             percentageGetter: percentageGetter,
             onStatusGetter:   onStatusGetter,
             chargingGetter:   chargingGetter,
             pollingInterval:  this.pollingInterval,
             historyInterval:  this.historyInterval,
-            lowBattery:       this.lowBattery
+            lowBattery:       this.lowBattery,
+            uniqueId:        '0_powerwall'
         };
         accessories.push(new Powerwall(this.log, powerwallConfig));
 
         var solarGetter = new ValueGetter(
             this.log, this.aggregateUrl, ['solar', 'instant_power'], 0);
         var solarConfig = {
-            name:            str.s('Solar'),
+            displayName:     str.s('Solar'),
             pollingInterval: this.pollingInterval,
             historyInterval: this.historyInterval,
             wattGetter:      solarGetter,
+            uniqueId:        '1_solar'
         };
         accessories.push(new PowerMeter(this.log, solarConfig));
 
         var gridGetter = new ValueGetter(
             this.log, this.aggregateUrl, ['site', 'instant_power'], 0);
         var gridConfig = {
-            name:            str.s('Grid'),
+            displayName:     str.s('Grid'),
             pollingInterval: this.pollingInterval,
             historyInterval: this.historyInterval,
             wattGetter:      gridGetter,
+            uniqueId:        '2_grid'
         };
         accessories.push(new PowerMeter(this.log, gridConfig));
 
         var batteryGetter = new ValueGetter(
             this.log, this.aggregateUrl, ['battery', 'instant_power'], 0);
         var batteryConfig = {
-            name:            str.s('Battery'),
+            displayName:     str.s('Battery'),
             pollingInterval: this.pollingInterval,
             historyInterval: this.historyInterval,
             wattGetter:      batteryGetter,
+            uniqueId:        '3_battery'
         };
         accessories.push(new PowerMeter(this.log, batteryConfig));
 
         var homeGetter = new ValueGetter(
             this.log, this.aggregateUrl, ['load', 'instant_power'], 0);
         var homeConfig = {
-            name:            str.s('Home'),
+            displayName:     str.s('Home'),
             pollingInterval: this.pollingInterval,
             historyInterval: this.historyInterval,
             wattGetter:      homeGetter,
+            uniqueId:        '4_home'
         };
         accessories.push(new PowerMeter(this.log, homeConfig));
 
@@ -208,16 +214,16 @@ TeslaPowerwall.prototype = {
 // TODO:
 // - History
 // - Centralize Data conversion for polling and getting
-// - Move everything to cache? (have to guarantee that update was
-//   successfully executed
 //
 function Powerwall(log, config) {
     this.log = log;
 
-    this.name             = config.name;
+    this.displayName      = config.displayName; // for fakegato
+    this.name             = config.displayName; // for homebridge
     this.pollingInterval  = config.pollingInterval;
     this.historyInterval  = config.historyInterval;
     this.lowBattery       = config.lowBattery;
+    this.uniqueId         = config.uniqueId;
 
     this.onStatusGetter   = config.onStatusGetter;
     this.percentageGetter = config.percentageGetter;
@@ -229,6 +235,14 @@ Powerwall.prototype = {
     getServices: function() {
         // Create services
         var services = [];
+
+        var info = new Service.AccessoryInformation();
+        info.setCharacteristic(Characteristic.Name, this.name)
+            .setCharacteristic(Characteristic.Manufacturer, 'Tesla')
+            .setCharacteristic(Characteristic.Model, str.s('Powerwall2'))
+            .setCharacteristic(Characteristic.FirmwareRevision, '-')
+            .setCharacteristic(Characteristic.SerialNumber, this.uniqueId);
+        services.push(info);
         
         this.stateSwitch = new Service.Switch(this.name);
         this.stateSwitch
@@ -272,8 +286,6 @@ Powerwall.prototype = {
         // Polling
         var onStatusLowPolling = new Polling(this.onStatusGetter, this.pollingInterval);
         onStatusLowPolling.pollValue(function(error, value) {
-            this.log.debug('Callback on status cache');
-
             this.stateSwitch
                 .getCharacteristic(Characteristic.On)
                 .updateValue(value);
@@ -281,8 +293,6 @@ Powerwall.prototype = {
 
         var percentagePolling = new Polling(this.percentageGetter, this.pollingInterval);
         percentagePolling.pollValue(function(error, value) {
-            this.log.debug('Callback percentage cache');
-
             this.battery
                 .getCharacteristic(Characteristic.BatteryLevel)
                 .updateValue(value);
@@ -383,10 +393,16 @@ Powerwall.prototype = {
 };
 
 // PowerMeter
+//
+// TODO:
+// - Let User specify AccessoryInformation
+//
 function PowerMeter(log, config) {
     this.log = log;
 
-    this.name             = config.name;
+    this.displayName      = config.displayName; // for fakegato
+    this.name             = config.displayName; // for homebridge
+    this.uniqueId         = config.uniqueId;
     this.pollingInterval  = config.pollingInterval;
     this.historyInterval  = config.historyInterval;
     this.wattGetter       = config.wattGetter;
@@ -396,6 +412,14 @@ PowerMeter.prototype = {
 
     getServices: function() {
         var services = [];
+        var info = new Service.AccessoryInformation();
+        info.setCharacteristic(Characteristic.Name, this.name)
+            .setCharacteristic(Characteristic.Manufacturer, 'Tesla')
+            .setCharacteristic(Characteristic.Model, str.s('Power Meter'))
+            .setCharacteristic(Characteristic.FirmwareRevision, '-')
+            .setCharacteristic(Characteristic.SerialNumber, this.uniqueId);
+        services.push(info);
+
         this.wattVisualizer = new Service.Fan(this.name + ' ' + str.s('Flow'));
         this.wattVisualizer
             .getCharacteristic(Characteristic.On)
@@ -407,8 +431,37 @@ PowerMeter.prototype = {
             .on('get', this.getRotSpWattVisualizer.bind(this))
             .on('set', this.setRotSpWattVisualizer.bind(this));
         services.push(this.wattVisualizer);
+
         // Eve Powermeter
-        //
+        this.powerConsumption = new Service.PowerMeterService(
+            this.name + ' ' + 
+            str.s('Power Meter'));
+        services.push(this.powerConsumption);
+
+        this.powerMeterHistory = 
+            new FakeGatoHistoryService('energy', this, {disableTimer:true});
+        services.push(this.powerMeterHistory);
+
+        // Polling
+        var wattPolling = new Polling(this.wattGetter, this.pollingInterval);
+        wattPolling.pollValue(function(error, value) {
+            this.wattVisualizer
+                .getCharacteristic(Characteristic.On)
+                .updateValue(Math.round(value / 100) != 0);
+            this.wattVisualizer
+                .getCharacteristic(Characteristic.RotationSpeed)
+                .updateValue(value / 100);
+            this.powerConsumption
+                .getCharacteristic(Characteristic.CurrentPowerConsumption)
+                .updateValue(value);
+        }.bind(this));
+
+        // History
+        var wattHistory = new Polling(this.wattGetter, this.historyInterval);
+        wattHistory.pollValue(function(error, value) {
+            this.powerMeterHistory.addEntry(
+                {time: moment().unix(), power: value});
+        }.bind(this));
 
         return services;
     },
@@ -532,9 +585,13 @@ ValueGetter.prototype = {
                     result = _parseJSON(body);
                     for (var att in this.attributes) {
                         result = result[this.attributes[att]];
-                    }
-                    if (result == undefined) {
-                        callback(null, this.defaultValue);
+
+                        if (result == undefined) {
+                            this.log.debug('Error while parsing Attributes!');
+                            this.log.debug('Attributes: ' + this.attributes);
+                            callback(null, this.defaultValue);
+                            return;
+                        }
                     }
                     callback(null, result);
                 }
@@ -600,19 +657,6 @@ var _parseJSON = function(str) {
     return obj;
 };
 
-/**
- * Returns value of stmt if it evaluates to something that is true,
- * otherwise 0
- *
- * @param {statement} stmt Statemt that gets evaluated.
- */
-var _notTrueToDefault = function(stmt, defaultValue) {
-    if (stmt) {
-        return stmt;
-    }
-    return defaultValue;
-};
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 // Localization
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -643,4 +687,3 @@ Strings.prototype.s = function(str) {
 
     return (this.dict[str] && this.dict[str][this.lang]) || str;
 };
-
