@@ -1,3 +1,16 @@
+// _____         _             ____                                      _ _ 
+//|_   _|__  ___| | __ _      |  _ \ _____      _____ _ ____      ____ _| | |
+//  | |/ _ \/ __| |/ _` |_____| |_) / _ \ \ /\ / / _ \ '__\ \ /\ / / _` | | |
+//  | |  __/\__ \ | (_| |_____|  __/ (_) \ V  V /  __/ |   \ V  V / (_| | | |
+//  |_|\___||___/_|\__,_|     |_|   \___/ \_/\_/ \___|_|    \_/\_/ \__,_|_|_|
+//
+// A homebridge plugin
+//
+//
+// TODO:
+// - Replace Request with cached request
+//
+
 'use strict';
 
 var Accessory, Characteristic, Service, UUIDGen;
@@ -126,9 +139,9 @@ TeslaPowerwall.prototype = {
 
         // Powerwall:
         var percentageGetter = new ValueGetter(
-            this.log, this.percentageUrl, 'percentage', 0);
+            this.log, this.percentageUrl, ['percentage'], 0);
         var onStatusGetter = new ValueGetter(
-            this.log, this.sitemasterUrl, 'running', false);
+            this.log, this.sitemasterUrl, ['running'], false);
         var chargingGetter = new ValueGetter(
             this.log, this.aggregateUrl, ['battery', 'instant_power'], 0);
         var powerwallConfig = {
@@ -142,11 +155,45 @@ TeslaPowerwall.prototype = {
         };
         accessories.push(new Powerwall(this.log, powerwallConfig));
 
-        // TODO:
-        // - Solar Powermeter
-        // - Grid Powermeter
-        // - Battery Powermeter
-        // - Home Powermeter
+        var solarGetter = new ValueGetter(
+            this.log, this.aggregateUrl, ['solar', 'instant_power'], 0);
+        var solarConfig = {
+            name:            str.s('Solar'),
+            pollingInterval: this.pollingInterval,
+            historyInterval: this.historyInterval,
+            wattGetter:      solarGetter,
+        };
+        accessories.push(new PowerMeter(this.log, solarConfig));
+
+        var gridGetter = new ValueGetter(
+            this.log, this.aggregateUrl, ['site', 'instant_power'], 0);
+        var gridConfig = {
+            name:            str.s('Grid'),
+            pollingInterval: this.pollingInterval,
+            historyInterval: this.historyInterval,
+            wattGetter:      gridGetter,
+        };
+        accessories.push(new PowerMeter(this.log, gridConfig));
+
+        var batteryGetter = new ValueGetter(
+            this.log, this.aggregateUrl, ['battery', 'instant_power'], 0);
+        var batteryConfig = {
+            name:            str.s('Battery'),
+            pollingInterval: this.pollingInterval,
+            historyInterval: this.historyInterval,
+            wattGetter:      batteryGetter,
+        };
+        accessories.push(new PowerMeter(this.log, batteryConfig));
+
+        var homeGetter = new ValueGetter(
+            this.log, this.aggregateUrl, ['load', 'instant_power'], 0);
+        var homeConfig = {
+            name:            str.s('Home'),
+            pollingInterval: this.pollingInterval,
+            historyInterval: this.historyInterval,
+            wattGetter:      homeGetter,
+        };
+        accessories.push(new PowerMeter(this.log, homeConfig));
 
         callback(accessories);
     }
@@ -307,8 +354,7 @@ Powerwall.prototype = {
         reset(
             this.batteryVisualizer, 
             Characteristic.On, 
-            this.getOnBatteryVisualizer.bind(this), 
-            1000);
+            this.getOnBatteryVisualizer.bind(this));
     },
     getHueBatteryVisualizer: function(callback) {
         this.percentageGetter.requestValue(function(error, value) {
@@ -321,8 +367,7 @@ Powerwall.prototype = {
         reset(
             this.batteryVisualizer, 
             Characteristic.Hue, 
-            this.getHueBatteryVisualizer.bind(this), 
-            1000);
+            this.getHueBatteryVisualizer.bind(this));
     },
     getBrightnessBatteryVisualizer: function(callback) {
         this.percentageGetter.requestValue(callback);
@@ -333,8 +378,7 @@ Powerwall.prototype = {
         reset(
             this.batteryVisualizer, 
             Characteristic.Brightness, 
-            this.getBrightnessBatteryVisualizer.bind(this), 
-            1000);
+            this.getBrightnessBatteryVisualizer.bind(this));
     }
 };
 
@@ -345,15 +389,57 @@ function PowerMeter(log, config) {
     this.name             = config.name;
     this.pollingInterval  = config.pollingInterval;
     this.historyInterval  = config.historyInterval;
-    this.lowBattery       = config.lowBattery;
-
     this.wattGetter       = config.wattGetter;
 }
 
 PowerMeter.prototype = {
 
     getServices: function() {
-    }
+        var services = [];
+        this.wattVisualizer = new Service.Fan(this.name + ' ' + str.s('Flow'));
+        this.wattVisualizer
+            .getCharacteristic(Characteristic.On)
+            .on('get', this.getOnWattVisualizer.bind(this))
+            .on('set', this.setOnWattVisualizer.bind(this));
+        this.wattVisualizer
+            .getCharacteristic(Characteristic.RotationSpeed)
+            .setProps({maxValue: 100, minValue: -100, minStep: 1})
+            .on('get', this.getRotSpWattVisualizer.bind(this))
+            .on('set', this.setRotSpWattVisualizer.bind(this));
+        services.push(this.wattVisualizer);
+        // Eve Powermeter
+        //
+
+        return services;
+    },
+
+    getOnWattVisualizer: function(callback) {
+        this.wattGetter.requestValue(function(error, value) {
+            callback(error, Math.round(value/100) != 0);
+        });
+    },
+
+    setOnWattVisualizer: function(state, callback) {
+        callback();
+        reset(
+            this.wattVisualizer, 
+            Characteristic.On, 
+            this.getOnWattVisualizer.bind(this));
+    },
+
+    getRotSpWattVisualizer: function(callback) {
+        this.wattGetter.requestValue(function(error, value) {
+            callback(error, value / 100); // 100 % = 10_000W
+        });
+    },
+
+    setRotSpWattVisualizer: function(state, callback) {
+        callback();
+        reset(
+            this.wattVisualizer, 
+            Characteristic.RotationSpeed, 
+            this.getRotSpWattVisualizer.bind(this));
+    },
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -426,11 +512,11 @@ var reset = function(service, characteristic, getterByCallback, delay){
 // TODO:
 // - Documenting
 // - Testing
-function ValueGetter(log, address, attribute, defaultValue) {
-    this.log = log;
-    this.address   = address;
-    this.attribute = attribute;
-    this.defaultValue   = defaultValue;
+function ValueGetter(log, address, attributes, defaultValue) {
+    this.log          = log;
+    this.address      = address;
+    this.attributes   = attributes; // array of strings
+    this.defaultValue = defaultValue;
 }
 
 ValueGetter.prototype = {
@@ -442,18 +528,13 @@ ValueGetter.prototype = {
                 var result;
                 if (_checkRequestError(this.log, error, response, body)) {
                     callback(error, this.defaultValue);
-                } else if ((typeof this.address) == 'string') {
-                    var resultJSON = _parseJSON(body);
-                    result = _notTrueToDefault(
-                        resultJSON &&
-                        resultJSON[this.attribute],
-                        this.defaultValue);
-                    callback(null, result);
                 } else {
-                    // this.attribute should be a array of strings
                     result = _parseJSON(body);
                     for (var att in this.attributes) {
-                        result = result[att];
+                        result = result[this.attributes[att]];
+                    }
+                    if (result == undefined) {
+                        callback(null, this.defaultValue);
                     }
                     callback(null, result);
                 }
@@ -550,14 +631,16 @@ function Strings(lang) {
         'Charge': {
             'en': 'Charge',
             'de': 'Ladezustand'
+        },
+        'Flow': {
+            'en': 'Flow',
+            'de': 'Fluss'
         }
     };
 }
 
 Strings.prototype.s = function(str) {
-    if (!this.dict[str][this.lang]) {
-        return str;
-    }
-    return this.dict[str][this.lang];
+
+    return (this.dict[str] && this.dict[str][this.lang]) || str;
 };
 
