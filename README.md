@@ -1,7 +1,12 @@
 # homebridge-tesla-powerwall
-Homebridge Plugin for the Tesla Powerwall
+(Unofficial) Homebridge Plugin for the Tesla Powerwall.
 
-# Installation as Homebridge plugin
+Communication with the Tesla Powerwall is according to https://github.com/vloschiavo/powerwall2 .
+
+### Like the Plugin?
+[Donations are appreciated.](https://www.paypal.me/HomebridgePowerwall)
+
+# Installation
 TODO
 
 ## Configuration
