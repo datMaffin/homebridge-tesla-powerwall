@@ -15,7 +15,7 @@
 
 'use strict';
 
-var Characteristic, Service, FakeGatoHistoryService;
+var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 var inherits = require('util').inherits;
 var request  = require('request');
 var moment   = require('moment');
@@ -24,8 +24,8 @@ var moment   = require('moment');
 var str;
 
 module.exports = function(homebridge) {
-    Service        = homebridge.hap.Service;
-    Characteristic = homebridge.hap.Characteristic;
+    Service                = homebridge.hap.Service;
+    Characteristic         = homebridge.hap.Characteristic;
     FakeGatoHistoryService = require('fakegato-history')(homebridge);
     homebridge.registerPlatform(
         'homebridge-tesla-powerwall', 'TeslaPowerwall', TeslaPowerwall);
@@ -64,6 +64,8 @@ function TeslaPowerwall(log, config) {
     this.lowBattery      = config.lowBattery      || 20;
 
     str = new Strings(config.language || 'en');
+
+    FakeGatoHistorySetting = config.historySetting || {};
 
     //-----------------------------------------------------------------------//
     // Setup Eve Characteristics and Services
@@ -115,6 +117,20 @@ function TeslaPowerwall(log, config) {
     Characteristic.ResetTotal.UUID = 'E863F112-079E-48FF-8F27-9C2605A29F52';
     inherits(Characteristic.ResetTotal, Characteristic);
 
+    Characteristic.AirPressure = function () {
+        Characteristic.call(this, 'Air Pressure', 'E863F10F-079E-48FF-8F27-9C2605A29F52');
+        this.setProps({
+            format: Characteristic.Formats.UINT16,
+            unit: 'mBar',
+            maxValue: 1100,
+            minValue: 700,
+            minStep: 1,
+            perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
+        });
+        this.value = this.getDefaultValue();
+    };
+    inherits(Characteristic.AirPressure, Characteristic);
+
     // Load custom (Eve) Services
     Service.PowerMeterService = function(name, uuid, subtype) {
         if (!uuid) {
@@ -126,6 +142,19 @@ function TeslaPowerwall(log, config) {
         this.addCharacteristic(Characteristic.ResetTotal);
     };
     inherits(Service.PowerMeterService, Service);
+
+    Service.WeatherService = function (displayName, subtype) {
+        Service.call(this, displayName, 'E863F001-079E-48FF-8F27-9C2605A29F52', subtype);
+        this.addCharacteristic(Characteristic.CurrentTemperature);
+        this.addCharacteristic(Characteristic.CurrentRelativeHumidity);
+        this.addCharacteristic(Characteristic.AirPressure);
+        this.getCharacteristic(Characteristic.CurrentTemperature)
+            .setProps({
+                minValue: -40,
+                maxValue: 60
+            });
+    };
+    inherits(Service.WeatherService, Service);
 }
 
 TeslaPowerwall.prototype = {
@@ -281,6 +310,14 @@ Powerwall.prototype = {
             .on('set', this.setBrightnessBatteryVisualizer.bind(this));
         services.push(this.batteryVisualizer);
 
+        // Eve Weather abused for battery charge history
+        this.batteryCharge = new Service.WeatherService(
+            this.name + ' ' + str.s('Battery') + ' History');
+        services.push(this.batteryCharge);
+
+        this.batteryChargeHistory = 
+            new FakeGatoHistoryService('weather', this, {disableTimer:true}, FakeGatoHistorySetting);
+        services.push(this.batteryChargeHistory);
 
         //
         // Polling
@@ -309,17 +346,25 @@ Powerwall.prototype = {
             this.batteryVisualizer
                 .getCharacteristic(Characteristic.Brightness)
                 .updateValue(value);
+
+            this.batteryCharge
+                .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+                .updateValue(value);
         }.bind(this));
 
         var chargingPolling = new Polling(this.chargingGetter, this.pollingInterval);
         chargingPolling.pollValue(function(error, value) {
-            this.log.debug('Callback charging cache');
-
             this.battery
                 .getCharacteristic(Characteristic.ChargingState)
                 .updateValue(value < 0);
         }.bind(this));
 
+        // history
+        var percentageHistory = new Polling(this.percentageGetter, this.historyInterval);
+        percentageHistory.pollValue(function(error, value) {
+            this.batteryChargeHistory.addEntry(
+                {time: moment().unix(), humidity: value});
+        }.bind(this));
 
         return services;
     },
@@ -439,7 +484,7 @@ PowerMeter.prototype = {
         services.push(this.powerConsumption);
 
         this.powerMeterHistory = 
-            new FakeGatoHistoryService('energy', this, {disableTimer:true});
+            new FakeGatoHistoryService('energy', this, {disableTimer:true}, FakeGatoHistorySetting);
         services.push(this.powerMeterHistory);
 
         // Polling
@@ -459,6 +504,11 @@ PowerMeter.prototype = {
         // History
         var wattHistory = new Polling(this.wattGetter, this.historyInterval);
         wattHistory.pollValue(function(error, value) {
+            // set negative values to 0
+            if (value < 0) {
+                value = 0;
+            }
+            this.log.debug('Watt History value: ' + value);
             this.powerMeterHistory.addEntry(
                 {time: moment().unix(), power: value});
         }.bind(this));
@@ -634,7 +684,6 @@ var _checkRequestError = function(log, error, response, body) {
         log('body: ', body);
         return true;
     }
-
     log.debug('error: ', error);
     log.debug('status code: ', response && response.statusCode);
     log.debug('body: ', body);
