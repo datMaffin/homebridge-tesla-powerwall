@@ -65,7 +65,10 @@ function TeslaPowerwall(log, config) {
 
     str = new Strings(config.language || 'en');
 
-    FakeGatoHistorySetting = config.historySetting || {};
+    FakeGatoHistorySetting = config.historySetting;
+    if (FakeGatoHistorySetting) {
+        FakeGatoHistorySetting.disableTimer = true;
+    }
 
     //-----------------------------------------------------------------------//
     // Setup Eve Characteristics and Services
@@ -316,7 +319,7 @@ Powerwall.prototype = {
         services.push(this.batteryCharge);
 
         this.batteryChargeHistory = 
-            new FakeGatoHistoryService('weather', this, {disableTimer:true}, FakeGatoHistorySetting);
+            new FakeGatoHistoryService('weather', this, FakeGatoHistorySetting);
         services.push(this.batteryChargeHistory);
 
         //
@@ -484,7 +487,7 @@ PowerMeter.prototype = {
         services.push(this.powerConsumption);
 
         this.powerMeterHistory = 
-            new FakeGatoHistoryService('energy', this, {disableTimer:true}, FakeGatoHistorySetting);
+            new FakeGatoHistoryService('energy', this, FakeGatoHistorySetting);
         services.push(this.powerMeterHistory);
 
         // Polling
@@ -684,9 +687,9 @@ var _checkRequestError = function(log, error, response, body) {
         log('body: ', body);
         return true;
     }
-    log.debug('error: ', error);
-    log.debug('status code: ', response && response.statusCode);
-    log.debug('body: ', body);
+    //log.debug('error: ', error);
+    //log.debug('status code: ', response && response.statusCode);
+    //log.debug('body: ', body);
 
     return false;
 };
