@@ -75,7 +75,7 @@ Optional:
 
 Mandatory:
 ```json
-                storage:'googleDrive',
+                "storage": "googleDrive",
 ```
 
 Optional:
