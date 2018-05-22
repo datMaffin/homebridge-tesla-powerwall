@@ -27,8 +27,7 @@ Optional:
             "lowBattery": 20,
             "language": "en"
 ```
-* Here filled with default values
-* There is no following comma after the last option
+* *Here* filled with default values
 * "pollingInterval" or "historyInterval" in milliseconds
 * "lowBattery" percent from which the charge is considered critical/low
 * "language" supported: "en" (English) and "de" (German). Changes a few names.
@@ -104,7 +103,6 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
 ## Example Configuration
 ```json
 ...
-    "platforms": [
         {
             "platform": "TeslaPowerwall",
             "name": "Tesla Powerwall",
@@ -113,10 +111,6 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
             "historyInterval": 120000,
             "lowBattery": 10,
             "language": "en"
-        },
-    ...
-    other platforms
-    ...
-    ]
+        }
 ...
 ```
