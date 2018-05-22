@@ -7,7 +7,9 @@ Communication with the Tesla Powerwall is according to https://github.com/vlosch
 [Donations are appreciated.](https://www.paypal.me/HomebridgePowerwall)
 
 # Installation
-TODO
+1. Install [Homebridge](https://github.com/nfarina/homebridge): `sudo npm install -g --unsafe-perm homebridge`
+2. Install this plugin `sudo npm install -g homebridge-tesla-powerwall`
+3. Add this plugin as a platorm to your `config.json` file
 
 ## Configuration
 Inside `config.json` of Homebridge:
@@ -102,16 +104,13 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
 * Skip Step 2 and 3
 * In step 4, use the quickstartGoogleDrive.js included with this module. You need to run the command from fakegato-history directory. Then just follow steps a to c.
 
-##### Additional notes for Google Drive
-* Pay attention so that your plugin does not issue multiple addEntry calls for the same accessory at the same time (this may results in improper behaviour of Google Drive to the its asynchronous nature)
-
 ## Example Configuration
 ```json
 ...
         {
             "platform": "TeslaPowerwall",
             "name": "Tesla Powerwall",
-            "ip": "192.168.170.100",
+            "ip": "192.168.178.100",
             "pollingInterval": 10000,
             "historyInterval": 120000,
             "lowBattery": 10,
@@ -123,3 +122,5 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
         }
 ...
 ```
+# Feature request / Bug found?
+You are welcome to create an [Issue](https://github.com/datMaffin/homebridge-tesla-powerwall/issues/new).
