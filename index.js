@@ -687,9 +687,9 @@ var _checkRequestError = function(log, error, response, body) {
         log('body: ', body);
         return true;
     }
-    //log.debug('error: ', error);
-    //log.debug('status code: ', response && response.statusCode);
-    //log.debug('body: ', body);
+    log.debug('error: ', error);
+    log.debug('status code: ', response && response.statusCode);
+    log.debug('body: ', body);
 
     return false;
 };
