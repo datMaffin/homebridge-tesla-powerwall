@@ -9,7 +9,7 @@ Communication with the Tesla Powerwall is according to https://github.com/vlosch
 # Installation
 1. Install [Homebridge](https://github.com/nfarina/homebridge): `sudo npm install -g --unsafe-perm homebridge`
 2. Install this plugin `sudo npm install -g homebridge-tesla-powerwall`
-3. Add this plugin as a platorm to your `config.json` file
+3. Add this plugin as a platform to your `config.json` file
 
 ## Configuration
 Inside `config.json` of Homebridge:
@@ -36,8 +36,8 @@ Optional:
 ```
 * *Here* filled with default values
 * "pollingInterval" or "historyInterval" in milliseconds
-* "lowBattery" percent from which the charge is considered critical/low
-* "language" supported: "en" (English) and "de" (German). Changes a few names.
+* "lowBattery": percentage from which the charge is considered critical/low
+* "language" supported: "en" (English) and "de" (German). Changes a few visible names.
 
 ```json
         },
