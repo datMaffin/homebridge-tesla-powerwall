@@ -32,12 +32,42 @@ Optional:
             "pollingInterval": 15000,
             "historyInterval": 300000,
             "lowBattery": 20,
-            "language": "en"
+            "language": "en",
+            "additionalServices": {
+                "powerwall": {
+                    "homekitVisual": true,
+                    "eveHistory": true
+                },
+                "solar": {
+                    "homekitVisual": true,
+                    "evePowerMeter": true,
+                    "eveHistory": true
+                },
+                "grid": {
+                    "homekitVisual": true,
+                    "positiveEvePowerMeter": true,
+                    "negativeEvePowerMeter": true,
+                    "eveHistory": true
+                },
+                "battery": {
+                    "homekitVisual": true,
+                    "positiveEvePowerMeter": true,
+                    "negativeEvePowerMeter": true,
+                    "eveHistory": true
+                },
+                "home": {
+                    "homekitVisual": true,
+                    "evePowerMeter": true,
+                    "eveHistory": true
+                }
+            }
 ```
-* *Here* filled with default values
+* *Here* filled with default values (values that are used when the attribute 
+  is not explicitly listed)
 * "pollingInterval" or "historyInterval" in milliseconds
-* "lowBattery": percentage from which the charge is considered critical/low
+* "lowBattery": Percentage from which the charge is considered critical/low
 * "language" supported: "en" (English) and "de" (German). Changes a few visible names.
+* "additionalServices": Services additional to the basic switch with a battery
 
 ```json
         },
