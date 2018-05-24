@@ -63,12 +63,53 @@ function TeslaPowerwall(log, config) {
 
     this.lowBattery      = config.lowBattery      || 20;
 
+    // language
     str = new Strings(config.language || 'en');
 
+    // history
     FakeGatoHistorySetting = config.historySetting;
     if (FakeGatoHistorySetting) {
         FakeGatoHistorySetting.disableTimer = true;
     }
+
+    // services to load
+    if (!config.additionalServices) {
+        this.additionalServices = {
+            powerwall: {
+                homekitVisual: true,
+                eveHistory: true
+            },
+            solar: {
+                homekitVisual: true,
+                evePowerMeter: true,
+                eveHistory: true
+            },
+            grid: {
+                homekitVisual: true,
+                positiveEvePowerMeter: true,
+                negativeEvePowerMeter: true,
+                eveHistory: true
+            },
+            battery: {
+                homekitVisual: true,
+                positiveEvePowerMeter: true,
+                negativeEvePowerMeter: true,
+                eveHistory: true
+            },
+            home: {
+                homekitVisual: true,
+                evePowerMeter: true,
+                eveHistory: true
+            }
+        };
+    } else {
+        this.additionalServices = config.additionalServices;
+        if (!this.additionalServices.powerwall) {
+            // there has to be always access to *.powerwall.*
+            this.additionalServices.powerwall = {};
+        }
+    }
+
 
     //-----------------------------------------------------------------------//
     // Setup Eve Characteristics and Services
@@ -185,53 +226,127 @@ TeslaPowerwall.prototype = {
             pollingInterval:  this.pollingInterval,
             historyInterval:  this.historyInterval,
             lowBattery:       this.lowBattery,
-            uniqueId:        '0_powerwall'
+            uniqueId:        '0_powerwall',
+            additionalServices: this.additionalServices.powerwall
         };
         accessories.push(new Powerwall(this.log, powerwallConfig));
 
-        var solarGetter = new ValueGetter(
-            this.log, this.aggregateUrl, ['solar', 'instant_power'], 0);
-        var solarConfig = {
-            displayName:     str.s('Solar'),
-            pollingInterval: this.pollingInterval,
-            historyInterval: this.historyInterval,
-            wattGetter:      solarGetter,
-            uniqueId:        '1_solar'
-        };
-        accessories.push(new PowerMeter(this.log, solarConfig));
+        if (this.additionalServices.solar) {
 
-        var gridGetter = new ValueGetter(
-            this.log, this.aggregateUrl, ['site', 'instant_power'], 0);
-        var gridConfig = {
-            displayName:     str.s('Grid'),
-            pollingInterval: this.pollingInterval,
-            historyInterval: this.historyInterval,
-            wattGetter:      gridGetter,
-            uniqueId:        '2_grid'
-        };
-        accessories.push(new PowerMeter(this.log, gridConfig));
+            var solarGetter = new ValueGetter(
+                this.log, this.aggregateUrl, ['solar', 'instant_power'], 0);
+            var solarConfig = {
+                displayName:     str.s('Solar'),
+                pollingInterval: this.pollingInterval,
+                historyInterval: this.historyInterval,
+                wattGetter:      solarGetter,
+                uniqueId:        '1_solar',
+                additionalServices: {
+                    homekitVisual: this.additionalServices.solar.homekitVisual,
+                    evePowerMeter: this.additionalServices.solar.evePowerMeter,
+                    eveHistory:    this.additionalServices.solar.eveHistory
+                }
+            };
+            accessories.push(new PowerMeter(this.log, solarConfig));
+        }
 
-        var batteryGetter = new ValueGetter(
-            this.log, this.aggregateUrl, ['battery', 'instant_power'], 0);
-        var batteryConfig = {
-            displayName:     str.s('Battery'),
-            pollingInterval: this.pollingInterval,
-            historyInterval: this.historyInterval,
-            wattGetter:      batteryGetter,
-            uniqueId:        '3_battery'
-        };
-        accessories.push(new PowerMeter(this.log, batteryConfig));
+        if (this.additionalServices.grid) {
+            var gridGetter = new ValueGetter(
+                this.log, this.aggregateUrl, ['site', 'instant_power'], 0);
+            var gridConfig = {
+                displayName:     str.s('Grid'),
+                pollingInterval: this.pollingInterval,
+                historyInterval: this.historyInterval,
+                wattGetter:      gridGetter,
+                uniqueId:        '2_grid',
+                additionalServices: {
+                    homekitVisual: this.additionalServices.grid.homekitVisual,
+                    evePowerMeter: this.additionalServices.grid.positiveEvePowerMeter,
+                    eveHistory:    this.additionalServices.grid.eveHistory
+                }
+            };
+            accessories.push(new PowerMeter(this.log, gridConfig));
 
-        var homeGetter = new ValueGetter(
-            this.log, this.aggregateUrl, ['load', 'instant_power'], 0);
-        var homeConfig = {
-            displayName:     str.s('Home'),
-            pollingInterval: this.pollingInterval,
-            historyInterval: this.historyInterval,
-            wattGetter:      homeGetter,
-            uniqueId:        '4_home'
-        };
-        accessories.push(new PowerMeter(this.log, homeConfig));
+            if (this.additionalServices.grid.negativeEvePowerMeter) {
+                var negGridGetter = new ValueGetter(
+                    this.log, 
+                    this.aggregateUrl, 
+                    ['site', 'instant_power'], 
+                    0, 
+                    function(i) {return -i});
+                var negGridConfig = {
+                    displayName:     str.s('Grid Feed'),
+                    pollingInterval: this.pollingInterval,
+                    historyInterval: this.historyInterval,
+                    wattGetter:      negGridGetter,
+                    uniqueId:        '2_neg_grid',
+                    additionalServices: {
+                        homekitVisual: false,
+                        evePowerMeter: true,
+                        eveHistory:    this.additionalServices.grid.eveHistory
+                    }
+                };
+                accessories.push(new PowerMeter(this.log, negGridConfig));
+            }
+        }
+
+        if (this.additionalServices.battery) {
+            var batteryGetter = new ValueGetter(
+                this.log, this.aggregateUrl, ['battery', 'instant_power'], 0);
+            var batteryConfig = {
+                displayName:     str.s('Battery'),
+                pollingInterval: this.pollingInterval,
+                historyInterval: this.historyInterval,
+                wattGetter:      batteryGetter,
+                uniqueId:        '3_battery',
+                additionalServices: {
+                    homekitVisual: this.additionalServices.battery.homekitVisual,
+                    evePowerMeter: this.additionalServices.battery.positiveEvePowerMeter,
+                    eveHistory:    this.additionalServices.battery.eveHistory
+                }
+            };
+            accessories.push(new PowerMeter(this.log, batteryConfig));
+
+            if (this.additionalServices.battery.negativeEvePowerMeter) {
+                var negBatteryGetter = new ValueGetter(
+                    this.log, 
+                    this.aggregateUrl, 
+                    ['battery', 'instant_power'], 
+                    0, 
+                    function(i) {return -i});
+                var negBatteryConfig = {
+                    displayName:     str.s('Battery Charge'),
+                    pollingInterval: this.pollingInterval,
+                    historyInterval: this.historyInterval,
+                    wattGetter:      negBatteryGetter,
+                    uniqueId:        '3_neg_battery',
+                    additionalServices: {
+                        homekitVisual: false,
+                        evePowerMeter: true,
+                        eveHistory:    this.additionalServices.battery.eveHistory
+                    }
+                };
+                accessories.push(new PowerMeter(this.log, negBatteryConfig));
+            }
+        }
+
+        if (this.additionalServices.home) {
+            var homeGetter = new ValueGetter(
+                this.log, this.aggregateUrl, ['load', 'instant_power'], 0);
+            var homeConfig = {
+                displayName:     str.s('Home'),
+                pollingInterval: this.pollingInterval,
+                historyInterval: this.historyInterval,
+                wattGetter:      homeGetter,
+                uniqueId:        '4_home',
+                additionalServices: {
+                    homekitVisual: this.additionalServices.home.homekitVisual,
+                    evePowerMeter: this.additionalServices.home.evePowerMeter,
+                    eveHistory:    this.additionalServices.home.eveHistory
+                }
+            };
+            accessories.push(new PowerMeter(this.log, homeConfig));
+        }
 
         callback(accessories);
     }
@@ -260,6 +375,8 @@ function Powerwall(log, config) {
     this.onStatusGetter   = config.onStatusGetter;
     this.percentageGetter = config.percentageGetter;
     this.chargingGetter   = config.chargingGetter;
+
+    this.additionalServices = config.additionalServices;
 }
 
 Powerwall.prototype = {
@@ -281,7 +398,6 @@ Powerwall.prototype = {
             .getCharacteristic(Characteristic.On)
             .on('get', this.getStateSwitch.bind(this))
             .on('set', this.setStateSwitch.bind(this));
-
         services.push(this.stateSwitch);
 
         this.battery = 
@@ -297,30 +413,35 @@ Powerwall.prototype = {
             .on('get', this.getLowBattery.bind(this));
         services.push(this.battery);
 
-        this.batteryVisualizer = 
-            new Service.Lightbulb(this.name + ' ' + str.s('Charge'));
-        this.batteryVisualizer
-            .getCharacteristic(Characteristic.On)
-            .on('get', this.getOnBatteryVisualizer.bind(this))
-            .on('set', this.setOnBatteryVisualizer.bind(this));
-        this.batteryVisualizer
-            .getCharacteristic(Characteristic.Hue)
-            .on('get', this.getHueBatteryVisualizer.bind(this))
-            .on('set', this.setHueBatteryVisualizer.bind(this));
-        this.batteryVisualizer
-            .getCharacteristic(Characteristic.Brightness)
-            .on('get', this.getBrightnessBatteryVisualizer.bind(this))
-            .on('set', this.setBrightnessBatteryVisualizer.bind(this));
-        services.push(this.batteryVisualizer);
+        if (this.additionalServices.homekitVisual) {
+            this.batteryVisualizer = 
+                new Service.Lightbulb(this.name + ' ' + str.s('Charge'));
+            this.batteryVisualizer
+                .getCharacteristic(Characteristic.On)
+                .on('get', this.getOnBatteryVisualizer.bind(this))
+                .on('set', this.setOnBatteryVisualizer.bind(this));
+            this.batteryVisualizer
+                .getCharacteristic(Characteristic.Hue)
+                .on('get', this.getHueBatteryVisualizer.bind(this))
+                .on('set', this.setHueBatteryVisualizer.bind(this));
+            this.batteryVisualizer
+                .getCharacteristic(Characteristic.Brightness)
+                .on('get', this.getBrightnessBatteryVisualizer.bind(this))
+                .on('set', this.setBrightnessBatteryVisualizer.bind(this));
+            services.push(this.batteryVisualizer);
+        }
 
-        // Eve Weather abused for battery charge history
-        this.batteryCharge = new Service.WeatherService(
-            this.name + ' ' + str.s('Battery') + ' History');
-        services.push(this.batteryCharge);
+        if (this.additionalServices.eveHistory) {
 
-        this.batteryChargeHistory = 
-            new FakeGatoHistoryService('weather', this, FakeGatoHistorySetting);
-        services.push(this.batteryChargeHistory);
+            // Eve Weather abused for battery charge history
+            this.batteryCharge = new Service.WeatherService(
+                this.name + ' ' + str.s('Battery') + ' History');
+            services.push(this.batteryCharge);
+
+            this.batteryChargeHistory = 
+                new FakeGatoHistoryService('weather', this, FakeGatoHistorySetting);
+            services.push(this.batteryChargeHistory);
+        }
 
         //
         // Polling
@@ -340,19 +461,23 @@ Powerwall.prototype = {
                 .getCharacteristic(Characteristic.StatusLowBattery)
                 .updateValue(value <= this.lowBattery);
 
-            this.batteryVisualizer
-                .getCharacteristic(Characteristic.On)
-                .updateValue(value != 0);
-            this.batteryVisualizer
-                .getCharacteristic(Characteristic.Hue)
-                .updateValue((value/100) * 120);
-            this.batteryVisualizer
-                .getCharacteristic(Characteristic.Brightness)
-                .updateValue(value);
+            if (this.additionalServices.homekitVisual) {
+                this.batteryVisualizer
+                    .getCharacteristic(Characteristic.On)
+                    .updateValue(value != 0);
+                this.batteryVisualizer
+                    .getCharacteristic(Characteristic.Hue)
+                    .updateValue((value/100) * 120);
+                this.batteryVisualizer
+                    .getCharacteristic(Characteristic.Brightness)
+                    .updateValue(value);
+            }
 
-            this.batteryCharge
-                .getCharacteristic(Characteristic.CurrentRelativeHumidity)
-                .updateValue(value);
+            if (this.additionalServices.eveHistory) {
+                this.batteryCharge
+                    .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+                    .updateValue(value);
+            }
         }.bind(this));
 
         var chargingPolling = new Polling(this.chargingGetter, this.pollingInterval);
@@ -363,11 +488,14 @@ Powerwall.prototype = {
         }.bind(this));
 
         // history
-        var percentageHistory = new Polling(this.percentageGetter, this.historyInterval);
-        percentageHistory.pollValue(function(error, value) {
-            this.batteryChargeHistory.addEntry(
-                {time: moment().unix(), humidity: value});
-        }.bind(this));
+        if (this.additionalServices.eveHistory) {
+            var percentageHistory = new Polling(this.percentageGetter, this.historyInterval);
+            percentageHistory.pollValue(function(error, value) {
+                this.log("history");
+                this.batteryChargeHistory.addEntry(
+                    {time: moment().unix(), humidity: value});
+            }.bind(this));
+        }
 
         return services;
     },
@@ -454,6 +582,8 @@ function PowerMeter(log, config) {
     this.pollingInterval  = config.pollingInterval;
     this.historyInterval  = config.historyInterval;
     this.wattGetter       = config.wattGetter;
+
+    this.additionalServices = config.additionalServices;
 }
 
 PowerMeter.prototype = {
@@ -468,53 +598,69 @@ PowerMeter.prototype = {
             .setCharacteristic(Characteristic.SerialNumber, this.uniqueId);
         services.push(info);
 
-        this.wattVisualizer = new Service.Fan(this.name + ' ' + str.s('Flow'));
-        this.wattVisualizer
-            .getCharacteristic(Characteristic.On)
-            .on('get', this.getOnWattVisualizer.bind(this))
-            .on('set', this.setOnWattVisualizer.bind(this));
-        this.wattVisualizer
-            .getCharacteristic(Characteristic.RotationSpeed)
-            .setProps({maxValue: 100, minValue: -100, minStep: 1})
-            .on('get', this.getRotSpWattVisualizer.bind(this))
-            .on('set', this.setRotSpWattVisualizer.bind(this));
-        services.push(this.wattVisualizer);
+        if (this.additionalServices.homekitVisual) {
+            this.wattVisualizer = new Service.Fan(this.name + ' ' + str.s('Flow'));
+            this.wattVisualizer
+                .getCharacteristic(Characteristic.On)
+                .on('get', this.getOnWattVisualizer.bind(this))
+                .on('set', this.setOnWattVisualizer.bind(this));
+            this.wattVisualizer
+                .getCharacteristic(Characteristic.RotationSpeed)
+                .setProps({maxValue: 100, minValue: -100, minStep: 1})
+                .on('get', this.getRotSpWattVisualizer.bind(this))
+                .on('set', this.setRotSpWattVisualizer.bind(this));
+            services.push(this.wattVisualizer);
+        }
 
         // Eve Powermeter
-        this.powerConsumption = new Service.PowerMeterService(
-            this.name + ' ' + 
-            str.s('Power Meter'));
-        services.push(this.powerConsumption);
+        
+        if (this.additionalServices.evePowerMeter) {
+            this.powerConsumption = new Service.PowerMeterService(
+                this.name + ' ' + 
+                str.s('Power Meter'));
+            services.push(this.powerConsumption);
+        }
 
-        this.powerMeterHistory = 
-            new FakeGatoHistoryService('energy', this, FakeGatoHistorySetting);
-        services.push(this.powerMeterHistory);
+        if (this.additionalServices.evePowerMeter &&
+            this.additionalServices.eveHistory) {
+            this.powerMeterHistory = 
+                new FakeGatoHistoryService('energy', this, FakeGatoHistorySetting);
+            services.push(this.powerMeterHistory);
+        }
 
         // Polling
         var wattPolling = new Polling(this.wattGetter, this.pollingInterval);
         wattPolling.pollValue(function(error, value) {
-            this.wattVisualizer
-                .getCharacteristic(Characteristic.On)
-                .updateValue(Math.round(value / 100) != 0);
-            this.wattVisualizer
-                .getCharacteristic(Characteristic.RotationSpeed)
-                .updateValue(value / 100);
-            this.powerConsumption
-                .getCharacteristic(Characteristic.CurrentPowerConsumption)
-                .updateValue(value);
+            if (this.additionalServices.homekitVisual) {
+                this.wattVisualizer
+                    .getCharacteristic(Characteristic.On)
+                    .updateValue(Math.round(value / 100) != 0);
+                this.wattVisualizer
+                    .getCharacteristic(Characteristic.RotationSpeed)
+                    .updateValue(value / 100);
+            }
+
+            if (this.additionalServices.evePowerMeter) {
+                this.powerConsumption
+                    .getCharacteristic(Characteristic.CurrentPowerConsumption)
+                    .updateValue(value);
+            }
         }.bind(this));
 
         // History
-        var wattHistory = new Polling(this.wattGetter, this.historyInterval);
-        wattHistory.pollValue(function(error, value) {
-            // set negative values to 0
-            if (value < 0) {
-                value = 0;
-            }
-            this.log.debug('Watt History value: ' + value);
-            this.powerMeterHistory.addEntry(
-                {time: moment().unix(), power: value});
-        }.bind(this));
+        if (this.additionalServices.evePowerMeter &&
+            this.additionalServices.eveHistory) {
+            var wattHistory = new Polling(this.wattGetter, this.historyInterval);
+            wattHistory.pollValue(function(error, value) {
+                // set negative values to 0
+                if (value < 0) {
+                    value = 0;
+                }
+                this.log.debug('Watt History value: ' + value);
+                this.powerMeterHistory.addEntry(
+                    {time: moment().unix(), power: value});
+            }.bind(this));
+        }
 
         return services;
     },
@@ -618,11 +764,17 @@ var reset = function(service, characteristic, getterByCallback, delay){
 // TODO:
 // - Documenting
 // - Testing
-function ValueGetter(log, address, attributes, defaultValue) {
+function ValueGetter(log, address, attributes, defaultValue, manipulate) {
     this.log          = log;
     this.address      = address;
     this.attributes   = attributes; // array of strings
     this.defaultValue = defaultValue;
+
+    if (!manipulate) {
+        this.manipulate = function(id) {return id};
+    } else {
+        this.manipulate = manipulate;
+    }
 }
 
 ValueGetter.prototype = {
@@ -633,7 +785,7 @@ ValueGetter.prototype = {
             function(error, response, body) {
                 var result;
                 if (_checkRequestError(this.log, error, response, body)) {
-                    callback(error, this.defaultValue);
+                    callback(error, this.manipulate(this.defaultValue));
                 } else {
                     result = _parseJSON(body);
                     for (var att in this.attributes) {
@@ -642,11 +794,11 @@ ValueGetter.prototype = {
                         if (result == undefined) {
                             this.log.debug('Error while parsing Attributes!');
                             this.log.debug('Attributes: ' + this.attributes);
-                            callback(null, this.defaultValue);
+                            callback(null, this.manipulate(this.defaultValue));
                             return;
                         }
                     }
-                    callback(null, result);
+                    callback(null, this.manipulate(result));
                 }
             }.bind(this));
     }
@@ -687,9 +839,9 @@ var _checkRequestError = function(log, error, response, body) {
         log('body: ', body);
         return true;
     }
-    log.debug('error: ', error);
-    log.debug('status code: ', response && response.statusCode);
-    log.debug('body: ', body);
+    //log.debug('error: ', error);
+    //log.debug('status code: ', response && response.statusCode);
+    //log.debug('body: ', body);
 
     return false;
 };
@@ -720,6 +872,7 @@ function Strings(lang) {
     }
 
     this.dict = {
+        /*
         'Battery': {
             'en': 'Battery',
             'de': 'Batterie'
@@ -732,6 +885,7 @@ function Strings(lang) {
             'en': 'Flow',
             'de': 'Fluss'
         }
+        */
     };
 }
 
