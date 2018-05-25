@@ -55,7 +55,7 @@ function TeslaPowerwall(log, config) {
     this.aggregateUrl  = address + '/api/meters/aggregates';
     this.sitemasterUrl = address + '/api/sitemaster';
     this.stopUrl       = address + '/api/sitemaster/stop';
-    this.startUrl      = address + '/api/sitemaster/start';
+    this.startUrl      = address + '/api/sitemaster/run';
 
     // In milliseconds
     this.pollingInterval = config.pollingInterval || 1000 * 15;
@@ -227,7 +227,9 @@ TeslaPowerwall.prototype = {
             historyInterval:  this.historyInterval,
             lowBattery:       this.lowBattery,
             uniqueId:        '0_powerwall',
-            additionalServices: this.additionalServices.powerwall
+            additionalServices: this.additionalServices.powerwall,
+            stopUrl:          this.stopUrl,
+            startUrl:          this.startUrl
         };
         accessories.push(new Powerwall(this.log, powerwallConfig));
 
@@ -377,6 +379,9 @@ function Powerwall(log, config) {
     this.chargingGetter   = config.chargingGetter;
 
     this.additionalServices = config.additionalServices;
+
+    this.stopUrl = config.stopUrl;
+    this.startUrl = config.startUrl;
 }
 
 Powerwall.prototype = {
@@ -505,7 +510,19 @@ Powerwall.prototype = {
     },
 
     setStateSwitch: function(state, callback) {
-        callback();
+        var url;
+
+        if (state) {
+            url = this.startUrl;
+        } else {
+            url = this.stopUrl;
+        }
+
+        _httpGetRequest(url, function(error, response, body) {
+            _checkRequestError(this.log, error, response, body);
+            callback(error);
+        }.bind(this));
+
         reset(
             this.stateSwitch, 
             Characteristic.On, 
@@ -789,14 +806,14 @@ ValueGetter.prototype = {
                 } else {
                     result = _parseJSON(body);
                     for (var att in this.attributes) {
-                        result = result[this.attributes[att]];
-
                         if (result == undefined) {
                             this.log.debug('Error while parsing Attributes!');
                             this.log.debug('Attributes: ' + this.attributes);
                             callback(null, this.manipulate(this.defaultValue));
                             return;
                         }
+
+                        result = result[this.attributes[att]];
                     }
                     callback(null, this.manipulate(result));
                 }
