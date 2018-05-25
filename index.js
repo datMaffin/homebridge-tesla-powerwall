@@ -441,6 +441,11 @@ Powerwall.prototype = {
             // Eve Weather abused for battery charge history
             this.batteryCharge = new Service.WeatherService(
                 this.name + ' ' + str.s('Battery') + ' History');
+            this.batteryCharge.getCharacteristic(Characteristic.CurrentTemperature)
+                .setProps({
+                    minValue: 0,
+                    maxValue: 100
+                });
             services.push(this.batteryCharge);
 
             this.batteryChargeHistory = 
@@ -481,6 +486,9 @@ Powerwall.prototype = {
             if (this.additionalServices.eveHistory) {
                 this.batteryCharge
                     .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+                    .updateValue(value);
+                this.batteryCharge
+                    .getCharacteristic(Characteristic.CurrentTemperature)
                     .updateValue(value);
             }
         }.bind(this));
