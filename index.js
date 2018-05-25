@@ -806,7 +806,7 @@ ValueGetter.prototype = {
                 } else {
                     result = _parseJSON(body);
                     for (var att in this.attributes) {
-                        if (result == undefined) {
+                        if (result == undefined || result == null) {
                             this.log.debug('Error while parsing Attributes!');
                             this.log.debug('Attributes: ' + this.attributes);
                             callback(null, this.manipulate(this.defaultValue));
