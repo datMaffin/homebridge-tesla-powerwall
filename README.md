@@ -1,7 +1,6 @@
 # homebridge-tesla-powerwall
 [![npm](https://img.shields.io/npm/v/homebridge-tesla-powerwall.svg)](https://www.npmjs.com/package/homebridge-tesla-powerwall)
 [![npm](https://img.shields.io/npm/dt/homebridge-tesla-powerwall.svg)](https://www.npmjs.com/package/homebridge-tesla-powerwall)
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/HomebridgePowerwall)
 
 (Unofficial) Homebridge Plugin for the Tesla Powerwall.
 
@@ -9,7 +8,7 @@ Communication with the Tesla Powerwall is according to https://github.com/vlosch
 
 This Plugin is still under development. If you like it, please support the development by sending a "cup of coffee" via Paypal:
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/HomebridgePowerwall)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/HomebridgePowerwall)
 
 And/Or leave a comment:
 https://teslamotorsclub.com/tmc/threads/tesla-powerwall-homekit-support-through-homebridge.116416/
