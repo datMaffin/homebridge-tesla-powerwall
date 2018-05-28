@@ -150,7 +150,6 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
             "pollingInterval": 10000,
             "historyInterval": 120000,
             "lowBattery": 10,
-            "language": "en",
             "historySetting": {
                 "storage": "fs"
             }
