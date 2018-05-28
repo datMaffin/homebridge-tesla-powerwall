@@ -20,9 +20,6 @@ var inherits = require('util').inherits;
 var request  = require('request');
 var moment   = require('moment');
 
-// used for internationalization
-var str;
-
 module.exports = function(homebridge) {
     Service                = homebridge.hap.Service;
     Characteristic         = homebridge.hap.Characteristic;
@@ -62,9 +59,6 @@ function TeslaPowerwall(log, config) {
     this.historyInterval = config.historyInterval || 1000 * 60 * 5;
 
     this.lowBattery      = config.lowBattery      || 20;
-
-    // language
-    str = new Strings(config.language || 'en');
 
     // history
     FakeGatoHistorySetting = config.historySetting;
@@ -238,7 +232,7 @@ TeslaPowerwall.prototype = {
             var solarGetter = new ValueGetter(
                 this.log, this.aggregateUrl, ['solar', 'instant_power'], 0);
             var solarConfig = {
-                displayName:     str.s('Solar'),
+                displayName:     'Solar',
                 pollingInterval: this.pollingInterval,
                 historyInterval: this.historyInterval,
                 wattGetter:      solarGetter,
@@ -256,7 +250,7 @@ TeslaPowerwall.prototype = {
             var gridGetter = new ValueGetter(
                 this.log, this.aggregateUrl, ['site', 'instant_power'], 0);
             var gridConfig = {
-                displayName:     str.s('Grid'),
+                displayName:     'Grid',
                 pollingInterval: this.pollingInterval,
                 historyInterval: this.historyInterval,
                 wattGetter:      gridGetter,
@@ -277,7 +271,7 @@ TeslaPowerwall.prototype = {
                     0, 
                     function(i) {return -i});
                 var negGridConfig = {
-                    displayName:     str.s('Grid Feed'),
+                    displayName:     'Grid Feed',
                     pollingInterval: this.pollingInterval,
                     historyInterval: this.historyInterval,
                     wattGetter:      negGridGetter,
@@ -296,7 +290,7 @@ TeslaPowerwall.prototype = {
             var batteryGetter = new ValueGetter(
                 this.log, this.aggregateUrl, ['battery', 'instant_power'], 0);
             var batteryConfig = {
-                displayName:     str.s('Battery'),
+                displayName:     'Battery',
                 pollingInterval: this.pollingInterval,
                 historyInterval: this.historyInterval,
                 wattGetter:      batteryGetter,
@@ -317,7 +311,7 @@ TeslaPowerwall.prototype = {
                     0, 
                     function(i) {return -i});
                 var negBatteryConfig = {
-                    displayName:     str.s('Battery Charge'),
+                    displayName:     'Battery Charge',
                     pollingInterval: this.pollingInterval,
                     historyInterval: this.historyInterval,
                     wattGetter:      negBatteryGetter,
@@ -336,7 +330,7 @@ TeslaPowerwall.prototype = {
             var homeGetter = new ValueGetter(
                 this.log, this.aggregateUrl, ['load', 'instant_power'], 0);
             var homeConfig = {
-                displayName:     str.s('Home'),
+                displayName:     'Home',
                 pollingInterval: this.pollingInterval,
                 historyInterval: this.historyInterval,
                 wattGetter:      homeGetter,
@@ -393,7 +387,7 @@ Powerwall.prototype = {
         var info = new Service.AccessoryInformation();
         info.setCharacteristic(Characteristic.Name, this.name)
             .setCharacteristic(Characteristic.Manufacturer, 'Tesla')
-            .setCharacteristic(Characteristic.Model, str.s('Powerwall2'))
+            .setCharacteristic(Characteristic.Model, 'Powerwall2')
             .setCharacteristic(Characteristic.FirmwareRevision, '-')
             .setCharacteristic(Characteristic.SerialNumber, this.uniqueId);
         services.push(info);
@@ -406,7 +400,7 @@ Powerwall.prototype = {
         services.push(this.stateSwitch);
 
         this.battery = 
-            new Service.BatteryService(this.name + ' ' + str.s('Battery'));
+            new Service.BatteryService(this.name + ' ' + 'Battery');
         this.battery
             .getCharacteristic(Characteristic.BatteryLevel)
             .on('get', this.getBatteryLevel.bind(this));
@@ -420,7 +414,7 @@ Powerwall.prototype = {
 
         if (this.additionalServices.homekitVisual) {
             this.batteryVisualizer = 
-                new Service.Lightbulb(this.name + ' ' + str.s('Charge'));
+                new Service.Lightbulb(this.name + ' ' + 'Charge');
             this.batteryVisualizer
                 .getCharacteristic(Characteristic.On)
                 .on('get', this.getOnBatteryVisualizer.bind(this))
@@ -440,7 +434,7 @@ Powerwall.prototype = {
 
             // Eve Weather abused for battery charge history
             this.batteryCharge = new Service.WeatherService(
-                this.name + ' ' + str.s('Battery') + ' History');
+                this.name + ' ' + 'Battery' + ' History');
             this.batteryCharge.getCharacteristic(Characteristic.CurrentTemperature)
                 .setProps({
                     minValue: 0,
@@ -618,13 +612,13 @@ PowerMeter.prototype = {
         var info = new Service.AccessoryInformation();
         info.setCharacteristic(Characteristic.Name, this.name)
             .setCharacteristic(Characteristic.Manufacturer, 'Tesla')
-            .setCharacteristic(Characteristic.Model, str.s('Power Meter'))
+            .setCharacteristic(Characteristic.Model, 'Power Meter')
             .setCharacteristic(Characteristic.FirmwareRevision, '-')
             .setCharacteristic(Characteristic.SerialNumber, this.uniqueId);
         services.push(info);
 
         if (this.additionalServices.homekitVisual) {
-            this.wattVisualizer = new Service.Fan(this.name + ' ' + str.s('Flow'));
+            this.wattVisualizer = new Service.Fan(this.name + ' ' + 'Flow');
             this.wattVisualizer
                 .getCharacteristic(Characteristic.On)
                 .on('get', this.getOnWattVisualizer.bind(this))
@@ -642,7 +636,7 @@ PowerMeter.prototype = {
         if (this.additionalServices.evePowerMeter) {
             this.powerConsumption = new Service.PowerMeterService(
                 this.name + ' ' + 
-                str.s('Power Meter'));
+                'Power Meter');
             services.push(this.powerConsumption);
         }
 
@@ -884,37 +878,4 @@ var _parseJSON = function(str) {
         obj = null;
     }
     return obj;
-};
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Localization
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-function Strings(lang) {
-    if (lang == 'de') {
-        this.lang = 'de';
-    } else {
-        this.lang = 'en';
-    }
-
-    this.dict = {
-        /*
-        'Battery': {
-            'en': 'Battery',
-            'de': 'Batterie'
-        },
-        'Charge': {
-            'en': 'Charge',
-            'de': 'Ladezustand'
-        },
-        'Flow': {
-            'en': 'Flow',
-            'de': 'Fluss'
-        }
-        */
-    };
-}
-
-Strings.prototype.s = function(str) {
-
-    return (this.dict[str] && this.dict[str][this.lang]) || str;
 };

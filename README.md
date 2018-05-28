@@ -1,10 +1,17 @@
 # homebridge-tesla-powerwall
+[![npm](https://img.shields.io/npm/v/npm.svg)](https://www.npmjs.com/package/homebridge-tesla-powerwall)
+[![npm](https://img.shields.io/npm/dt/express.svg)](https://www.npmjs.com/package/homebridge-tesla-powerwall)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/HomebridgePowerwall)
+
 (Unofficial) Homebridge Plugin for the Tesla Powerwall.
 
 Communication with the Tesla Powerwall is according to https://github.com/vloschiavo/powerwall2 .
 
-### Like the Plugin?
-[Donations are appreciated.](https://www.paypal.me/HomebridgePowerwall)
+This Plugin is still under development. If you like it, please support the development by sending a "cup of coffee" via Paypal:
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/HomebridgePowerwall)
+
+And/Or leave a comment:
+https://teslamotorsclub.com/tmc/threads/tesla-powerwall-homekit-support-through-homebridge.116416/
 
 # Installation
 1. Install [Homebridge](https://github.com/nfarina/homebridge): `sudo npm install -g --unsafe-perm homebridge`
@@ -32,7 +39,6 @@ Optional:
             "pollingInterval": 15000,
             "historyInterval": 300000,
             "lowBattery": 20,
-            "language": "en",
             "additionalServices": {
                 "powerwall": {
                     "homekitVisual": true,
@@ -66,7 +72,6 @@ Optional:
   is not explicitly listed)
 * "pollingInterval" or "historyInterval" in milliseconds
 * "lowBattery": Percentage from which the charge is considered critical/low
-* "language" supported: "en" (English) and "de" (German). Changes a few visible names.
 * "additionalServices": Services additional to the basic switch with a battery
 
 ```json
