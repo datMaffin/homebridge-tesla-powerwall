@@ -269,7 +269,7 @@ TeslaPowerwall.prototype = {
                     this.aggregateUrl, 
                     ['site', 'instant_power'], 
                     0, 
-                    function(i) {return -i});
+                    function(i) {return -i;});
                 var negGridConfig = {
                     displayName:     'Grid Feed',
                     pollingInterval: this.pollingInterval,
@@ -309,7 +309,7 @@ TeslaPowerwall.prototype = {
                     this.aggregateUrl, 
                     ['battery', 'instant_power'], 
                     0, 
-                    function(i) {return -i});
+                    function(i) {return -i;});
                 var negBatteryConfig = {
                     displayName:     'Battery Charge',
                     pollingInterval: this.pollingInterval,
@@ -498,7 +498,7 @@ Powerwall.prototype = {
         if (this.additionalServices.eveHistory) {
             var percentageHistory = new Polling(this.percentageGetter, this.historyInterval);
             percentageHistory.pollValue(function(error, value) {
-                this.log("history");
+                this.log('history');
                 this.batteryChargeHistory.addEntry(
                     {time: moment().unix(), humidity: value});
             }.bind(this));
@@ -790,7 +790,7 @@ function ValueGetter(log, address, attributes, defaultValue, manipulate) {
     this.defaultValue = defaultValue;
 
     if (!manipulate) {
-        this.manipulate = function(id) {return id};
+        this.manipulate = function(id) {return id;};
     } else {
         this.manipulate = manipulate;
     }
