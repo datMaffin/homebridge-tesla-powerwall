@@ -15,7 +15,7 @@
 
 'use strict';
 
-var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
+var Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting;
 var inherits = require('util').inherits;
 var request  = require('request');
 var moment   = require('moment');
@@ -23,6 +23,7 @@ var moment   = require('moment');
 module.exports = function(homebridge) {
     Service                = homebridge.hap.Service;
     Characteristic         = homebridge.hap.Characteristic;
+    Accessory              = homebridge.hap.Accessory;
     FakeGatoHistoryService = require('fakegato-history')(homebridge);
     homebridge.registerPlatform(
         'homebridge-tesla-powerwall', 'TeslaPowerwall', TeslaPowerwall);
@@ -42,7 +43,7 @@ function TeslaPowerwall(log, config) {
     //-----------------------------------------------------------------------//
     // Load configs
     //-----------------------------------------------------------------------//
-    this.name = config.name;
+    this.name = config.name || 'Tesla Powerwall';
 
     var ip      = config.ip || '127.0.0.1';
     var port    = config.port || '80';
@@ -376,7 +377,10 @@ function Powerwall(log, config) {
 
     this.stopUrl = config.stopUrl;
     this.startUrl = config.startUrl;
+
+    inherits(Powerwall, Accessory);
 }
+
 
 Powerwall.prototype = {
 
@@ -603,7 +607,10 @@ function PowerMeter(log, config) {
     this.wattGetter       = config.wattGetter;
 
     this.additionalServices = config.additionalServices;
+    
+    inherits(PowerMeter, Accessory);
 }
+
 
 PowerMeter.prototype = {
 
