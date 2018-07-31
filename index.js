@@ -45,7 +45,7 @@ function TeslaPowerwall(log, config) {
     this.name = config.name;
 
     var ip      = config.ip || '127.0.0.1';
-    var port    = config.port || '80';
+    var port    = config.port || '';
     var address = 'http://' + ip + ':' + port;
 
     // Because the https powerwall connection is self signed...
