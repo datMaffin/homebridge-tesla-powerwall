@@ -48,9 +48,9 @@ function TeslaPowerwall(log, config) {
     var port    = config.port;
     var address;
     if (port && port != '') {
-        address = 'http://' + ip;
-    } else {
         address = 'http://' + ip + ':' + port;
+    } else {
+        address = 'http://' + ip;
     }
 
     // Because the https powerwall connection is self signed...

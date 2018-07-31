@@ -35,7 +35,7 @@ Mandatory:
 Optional:
 ```json
             "ip": "127.0.0.1",
-            "port": "80",
+            "port": "",
             "pollingInterval": 15000,
             "historyInterval": 300000,
             "lowBattery": 20,
