@@ -48,8 +48,9 @@ function TeslaPowerwall(log, config) {
     var port    = config.port || '80';
     var address = 'https://' + ip + ':' + port;
 
-    // Because of the https powerwall connection is self signed...
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    // Because the https powerwall connection is self signed...
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
 
     this.percentageUrl = address + '/api/system_status/soe';
     this.aggregateUrl  = address + '/api/meters/aggregates';
