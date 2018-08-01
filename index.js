@@ -46,8 +46,17 @@ function TeslaPowerwall(log, config) {
     this.name = config.name || 'Tesla Powerwall';
 
     var ip      = config.ip || '127.0.0.1';
-    var port    = config.port || '80';
-    var address = 'http://' + ip + ':' + port;
+    var port    = config.port;
+    var address;
+    if (port && port != '') {
+        address = 'http://' + ip + ':' + port;
+    } else {
+        address = 'http://' + ip;
+    }
+
+    // Because the https powerwall connection is self signed...
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 
     this.percentageUrl = address + '/api/system_status/soe';
     this.aggregateUrl  = address + '/api/meters/aggregates';
