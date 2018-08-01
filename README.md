@@ -123,7 +123,7 @@ Mandatory:
 Optional:
 ```json
                 "size": 4032,
-                "folder": "fakegato"
+                "folder": "fakegato",
                 "keyPath": "/place/to/store/my/keys/"
 ```
 * "size" default: 4032
