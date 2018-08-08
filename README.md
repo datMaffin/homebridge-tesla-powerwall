@@ -156,5 +156,10 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
         }
 ...
 ```
+# FAQ
+### Plugin stopped working after Powerwall upgraded to version 1.20.0
+(Possible) **Solution**: Update this plugin and check in the `config.json` that 
+the `port` option is either set to `""` or removed.
+
 # Feature request / Bug found?
 You are welcome to create an [Issue](https://github.com/datMaffin/homebridge-tesla-powerwall/issues/new).
