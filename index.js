@@ -46,17 +46,13 @@ function TeslaPowerwall(log, config) {
     this.name = config.name || 'Tesla Powerwall';
 
     var ip      = config.ip || '127.0.0.1';
-    var port    = config.port;
+    var port    = config.port || '';
     var address;
-    if (port && port !== '') {
+    if (port !== '') {
         address = 'http://' + ip + ':' + port;
     } else {
         address = 'http://' + ip;
     }
-
-    // Because the https powerwall connection is self signed...
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 
     this.percentageUrl = address + '/api/system_status/soe';
     this.aggregateUrl  = address + '/api/meters/aggregates';
@@ -844,7 +840,8 @@ ValueGetter.prototype = {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 /**
- * Creates a GET request for the given url
+ * Creates an insecure (ignores certificate warnings) GET request for the given 
+ * url
  *
  * @param {string} url URL of the request.
  * @param {function} callback Callback method for handling the response.
@@ -852,7 +849,10 @@ ValueGetter.prototype = {
 var _httpGetRequest = function(url, callback) {
     request({
         url: url,
-        method: 'GET'
+        method: 'GET',
+        agentOptions: {
+            rejectUnauthorized: false
+        }
     },
     function(error, response, body) {
         callback(error, response, body);
