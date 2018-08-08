@@ -15,7 +15,7 @@
 
 'use strict';
 
-var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
+var Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting;
 var inherits = require('util').inherits;
 var request  = require('request');
 var moment   = require('moment');
@@ -23,6 +23,7 @@ var moment   = require('moment');
 module.exports = function(homebridge) {
     Service                = homebridge.hap.Service;
     Characteristic         = homebridge.hap.Characteristic;
+    Accessory              = homebridge.hap.Accessory;
     FakeGatoHistoryService = require('fakegato-history')(homebridge);
     homebridge.registerPlatform(
         'homebridge-tesla-powerwall', 'TeslaPowerwall', TeslaPowerwall);
@@ -42,12 +43,12 @@ function TeslaPowerwall(log, config) {
     //-----------------------------------------------------------------------//
     // Load configs
     //-----------------------------------------------------------------------//
-    this.name = config.name;
+    this.name = config.name || 'Tesla Powerwall';
 
     var ip      = config.ip || '127.0.0.1';
     var port    = config.port;
     var address;
-    if (port && port != '') {
+    if (port && port !== '') {
         address = 'http://' + ip + ':' + port;
     } else {
         address = 'http://' + ip;
@@ -232,7 +233,7 @@ TeslaPowerwall.prototype = {
             uniqueId:        '0_powerwall',
             additionalServices: this.additionalServices.powerwall,
             stopUrl:          this.stopUrl,
-            startUrl:          this.startUrl
+            startUrl:         this.startUrl
         };
         accessories.push(new Powerwall(this.log, powerwallConfig));
 
@@ -385,7 +386,10 @@ function Powerwall(log, config) {
 
     this.stopUrl = config.stopUrl;
     this.startUrl = config.startUrl;
+
+    inherits(Powerwall, Accessory);
 }
+
 
 Powerwall.prototype = {
 
@@ -477,7 +481,7 @@ Powerwall.prototype = {
             if (this.additionalServices.homekitVisual) {
                 this.batteryVisualizer
                     .getCharacteristic(Characteristic.On)
-                    .updateValue(value != 0);
+                    .updateValue(value !== 0);
                 this.batteryVisualizer
                     .getCharacteristic(Characteristic.Hue)
                     .updateValue((value/100) * 120);
@@ -559,7 +563,7 @@ Powerwall.prototype = {
 
     getOnBatteryVisualizer: function(callback) {
         this.percentageGetter.requestValue(function(error, value) {
-            callback(error, value != 0);
+            callback(error, value !== 0);
         }.bind(this));
     },
 
@@ -612,7 +616,10 @@ function PowerMeter(log, config) {
     this.wattGetter       = config.wattGetter;
 
     this.additionalServices = config.additionalServices;
+    
+    inherits(PowerMeter, Accessory);
 }
+
 
 PowerMeter.prototype = {
 
@@ -662,7 +669,7 @@ PowerMeter.prototype = {
             if (this.additionalServices.homekitVisual) {
                 this.wattVisualizer
                     .getCharacteristic(Characteristic.On)
-                    .updateValue(Math.round(value / 100) != 0);
+                    .updateValue(Math.round(value / 100) !== 0);
                 this.wattVisualizer
                     .getCharacteristic(Characteristic.RotationSpeed)
                     .updateValue(value / 100);
@@ -695,7 +702,7 @@ PowerMeter.prototype = {
 
     getOnWattVisualizer: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
-            callback(error, Math.round(value/100) != 0);
+            callback(error, Math.round(value/100) !== 0);
         });
     },
 
@@ -817,7 +824,7 @@ ValueGetter.prototype = {
                 } else {
                     result = _parseJSON(body);
                     for (var att in this.attributes) {
-                        if (result == undefined || result == null) {
+                        if (result === undefined || result === null) {
                             this.log.debug('Error while parsing Attributes!');
                             this.log.debug('Attributes: ' + this.attributes);
                             callback(null, this.manipulate(this.defaultValue));

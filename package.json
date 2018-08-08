@@ -4,7 +4,7 @@
   "description": "Homebridge plugin for the Tesla Powerwall",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "nyc mocha --exit"
   },
   "repository": {
     "type": "git",
@@ -28,6 +28,13 @@
     "fakegato-history": "^0.5.1",
     "moment": "^2.22.1",
     "request": "^2.87.0",
-    "util": "^0.10.3"
+    "util": "^0.10.4"
+  },
+  "devDependencies": {
+    "chalk": "^2.4.1",
+    "events": "^3.0.0",
+    "mocha": "^5.2.0",
+    "nock": "^9.3.3",
+    "nyc": "^12.0.2"
   }
 }
