@@ -79,6 +79,12 @@ PowerMeter.prototype = {
         // History
         if (this.additionalServices.evePowerMeter &&
             this.additionalServices.eveHistory) {
+
+            this.powerConsumption
+                .getCharacteristic(Characteristic.ResetTotal)
+                .on('set', this.setResetTotalConsumption.bind(this))
+                .on('get', this.getResetTotalConsumption.bind(this));
+
             this.powerMeterHistory = 
                 new FakeGatoHistoryService('energy', this, FakeGatoHistorySetting);
             services.push(this.powerMeterHistory);
@@ -92,7 +98,58 @@ PowerMeter.prototype = {
                 this.log.debug('Watt History value: ' + value);
                 this.powerMeterHistory.addEntry(
                     {time: moment().unix(), power: value});
+
+                var totalEnergy = 
+                    (this.powerMeterHistory.getExtraPersistedData() &&
+                     this.powerMeterHistory.getExtraPersistedData().totalEnergy) || 0;
+                totalEnergy += value * this.historyInterval / 3600 / 1000;
+
+                var lastReset = 
+                    (this.powerMeterHistory.getExtraPersistedData() &&
+                     this.powerMeterHistory.getExtraPersistedData().lastReset) || 0;
+
+                this.powerMeterHistory.setExtraPersistedData(
+                    {totalEnergy: totalEnergy, lastReset: lastReset});
+
+                this.powerConsumption
+                    .getCharacteristic(Characteristic.TotalConsumption)
+                    .updateValue(totalEnergy);
+
             }.bind(this));
+        }
+
+        // History with line graph
+        if (this.additionalServices.eveLineGraph) {
+            this.energyLG = new Service.WeatherService(this.name + ' Energy Line Graph');
+            this.energyLG
+                .getCharacteristic(Characteristic.CurrentTemperature)
+                .setProps({
+                    minValue: -10000,
+                    maxValue: 10000
+                })
+                .on('get', this.getWatt.bind(this));
+            eventPolling(this.energyLG, Characteristic.CurrentTemperature, this.pollingInterval);
+            this.energyLG
+                .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+                .setProps({
+                    minValue: -10000,
+                    maxValue: 10000
+                })
+                .on('get', this.getWatt.bind(this));
+            eventPolling(this.energyLG, Characteristic.CurrentRelativeHumidity, this.pollingInterval);
+            services.push(this.energyLG);
+
+            this.energyLGHistory = 
+                new FakeGatoHistoryService('weather', this, FakeGatoHistorySetting);
+            services.push(this.batteryChargeHistory);
+
+            var lgHistory = new Polling(this.getWatt, this.historyInterval);
+            lgHistory.pollValue(function(error, value) {
+                this.log('lg history');
+                this.energyLGHistory.addEntry(
+                    {time: moment().unix(), humidity: value});
+            }.bind(this));
+
         }
 
         return services;
@@ -124,6 +181,20 @@ PowerMeter.prototype = {
     setRotSpWattVisualizer: function(state, callback) {
         callback();
         reset(this.wattVisualizer, Characteristic.RotationSpeed);
+    },
+
+    setResetTotalConsumption: function(state, callback) {
+        this.powerLoggingService.setExtraPersistedData({ totalEnergy: 0, lastReset: state});
+        this.powerConsumption
+            .getCharacteristic(Characteristic.TotalConsumption)
+            .updateValue(0);
+        callback(null);
+    },
+
+    getResetTotalConsumption: function(callback) {
+        callback(
+            (this.powerMeterHistory.getExtraPersistedData() &&
+            this.powerMeterHistory.getExtraPersistedData().lastReset) || 0);
     },
 };
 

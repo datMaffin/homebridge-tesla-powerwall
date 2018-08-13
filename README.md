@@ -29,8 +29,14 @@ Mandatory:
 ```json
             "platform": "TeslaPowerwall",
             "name": "Tesla Powerwall",
+            "auth": {
+                "username": "your username",
+                "password": "your password"
+            },
 ```
-* "name" is freely choosable
+* "name" can be freely chosen
+* Authentication via "username" and "password" is needed (since powerwall 
+  software version 1.20.0) for running and stopping the powerwall.
 
 Optional:
 ```json
@@ -47,32 +53,42 @@ Optional:
                 "solar": {
                     "homekitVisual": true,
                     "evePowerMeter": true,
-                    "eveHistory": true
+                    "eveHistory": true,
+                    "eveLineGraph": false
                 },
                 "grid": {
                     "homekitVisual": true,
                     "positiveEvePowerMeter": true,
                     "negativeEvePowerMeter": true,
-                    "eveHistory": true
+                    "eveHistory": true,
+                    "eveLineGraph": false
                 },
                 "battery": {
                     "homekitVisual": true,
                     "positiveEvePowerMeter": true,
                     "negativeEvePowerMeter": true,
-                    "eveHistory": true
+                    "eveHistory": true,
+                    "eveLineGraph": false
                 },
                 "home": {
                     "homekitVisual": true,
                     "evePowerMeter": true,
-                    "eveHistory": true
+                    "eveHistory": true,
+                    "eveLineGraph": false
                 }
             }
 ```
 * *Here* filled with default values (values that are used when the attribute 
   is not explicitly listed)
+
 * "pollingInterval" or "historyInterval" in milliseconds
 * "lowBattery": Percentage from which the charge is considered critical/low
-* "additionalServices": Services additional to the basic switch with a battery
+* "additionalServices": Services additional to the basic switch with the 
+  battery status.
+* *eve power meter* displays total consumption only if the "eveHistory" is true
+* "eveHistory" only works with the corresponding powermeter enabled
+* "eveLineGraph": Saves power data in a weather diagramm to get a nice
+  line chart.
 
 ```json
         },
@@ -159,7 +175,7 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
 # FAQ
 ### Plugin stopped working after Powerwall upgraded to version 1.20.0
 (Possible) **Solution**: Update this plugin and check in the `config.json` that 
-the `port` option is either set to `""` or removed.
+the `port` option is either removed or set to `""`.
 
 # Feature request / Bug found?
 You are welcome to create an [Issue](https://github.com/datMaffin/homebridge-tesla-powerwall/issues/new).

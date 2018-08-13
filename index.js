@@ -9,10 +9,12 @@
 //
 // TODO:
 // - Switch for automation?????
-// - Documenting
 // - pictures for github
 // - moooar line-diagramms!
+// - fix total consumption
+// - fix stop/run (authentication problem)
 // - custom homekit icons via homebridge????
+// - round all values to better test
 //
 
 'use strict';
@@ -59,11 +61,30 @@ function TeslaPowerwall(log, config) {
         address = 'http://' + ip;
     }
 
+
     this.percentageUrl = address + '/api/system_status/soe';
     this.aggregateUrl  = address + '/api/meters/aggregates';
     this.sitemasterUrl = address + '/api/sitemaster';
-    this.stopUrl       = address + '/api/sitemaster/stop';
-    this.startUrl      = address + '/api/sitemaster/run';
+
+    var user = config && config.auth && config.auth.username;
+    var password = config && config.auth && config.auth.password;
+
+    if (user && password) {
+        if (port !== '') {
+            this.stopUrl  = 'http://' + user + ':' + password + '@' + 
+                ip + '/api/sitemaster/stop';
+            this.startUrl = 'http://' + user + ':' + password + '@' + 
+                ip + '/api/sitemaster/run';
+        } else {
+            this.stopUrl  = 'http://' + user + ':' + password + '@' + 
+                ip + ':' + port + '/api/sitemaster/stop';
+            this.startUrl = 'http://' + user + ':' + password + '@' + 
+                ip + ':' + port + '/api/sitemaster/run';
+        }
+    } else {
+        this.stopUrl  = address + '/api/sitemaster/stop';
+        this.startUrl = address + '/api/sitemaster/run';
+    }
 
     // In milliseconds
     this.pollingInterval = config.pollingInterval || 1000 * 15;
@@ -77,46 +98,65 @@ function TeslaPowerwall(log, config) {
         FakeGatoHistorySetting.disableTimer = true;
     }
 
-    // services to load
-    if (!config.additionalServices) {
-        this.additionalServices = {
-            powerwall: {
-                homekitVisual: true,
-                eveHistory: true
-            },
-            solar: {
-                homekitVisual: true,
-                evePowerMeter: true,
-                eveHistory: true
-            },
-            grid: {
-                homekitVisual: true,
-                positiveEvePowerMeter: true,
-                negativeEvePowerMeter: true,
-                eveHistory: true
-            },
-            battery: {
-                homekitVisual: true,
-                positiveEvePowerMeter: true,
-                negativeEvePowerMeter: true,
-                eveHistory: true
-            },
-            home: {
-                homekitVisual: true,
-                evePowerMeter: true,
-                eveHistory: true
-            }
-        };
-    } else {
-        this.additionalServices = config.additionalServices;
-        if (!this.additionalServices.powerwall) {
-            // there has to be always access to *.powerwall.*
-            this.additionalServices.powerwall = {};
+    // additional services to load
+    this.additionalServices = {
+        powerwall: {
+            homekitVisual: 
+                defaultValue(config, ['additionalServices', 'powerwall', 'homekitVisual'], true),
+            eveHistory: 
+                defaultValue(config, ['additionalServices', 'powerwall', 'eveHistory'], true),
+        },
+        solar: {
+            homekitVisual:
+                defaultValue(config, ['additionalServices', 'solar', 'homekitVisual'], true),
+            evePowerMeter:
+                defaultValue(config, ['additionalServices', 'solar', 'evePowerMeter'], true),
+            eveHistory:
+                defaultValue(config, ['additionalServices', 'solar', 'eveHistory'], true),
+            eveLineGraph:
+                defaultValue(config, ['additionalServices', 'solar', 'eveLineGraph'], false)
+        },
+        grid: {
+            homekitVisual:
+                defaultValue(config, ['additionalServices', 'grid', 'homekitVisual'], true),
+            positiveEvePowerMeter:
+                defaultValue(config, ['additionalServices', 'grid', 'positiveEvePowerMeter'], true),
+            negativeEvePowerMeter:
+                defaultValue(config, ['additionalServices', 'grid', 'negativeRvePowerMeter'], true),
+            eveHistory:
+                defaultValue(config, ['additionalServices', 'grid', 'eveHistory'], true),
+            eveLineGraph:
+                defaultValue(config, ['additionalServices', 'grid', 'eveLineGraph'], false)
+        },
+        battery: {
+            homekitVisual:
+                defaultValue(config, ['additionalServices', 'battery', 'homekitVisual'], true),
+            positiveEvePowerMeter:
+                defaultValue(config, ['additionalServices', 'battery', 'positiveEvePowerMeter'], true),
+            negativeEvePowerMeter:
+                defaultValue(config, ['additionalServices', 'battery', 'negativeRvePowerMeter'], true),
+            eveHistory:
+                defaultValue(config, ['additionalServices', 'battery', 'eveHistory'], true),
+            eveLineGraph:
+                defaultValue(config, ['additionalServices', 'battery', 'eveLineGraph'], false)
+        },
+        home: {
+            homekitVisual:
+                defaultValue(config, ['additionalServices', 'home', 'homekitVisual'], true),
+            evePowerMeter:
+                defaultValue(config, ['additionalServices', 'home', 'evePowerMeter'], true),
+            eveHistory:
+                defaultValue(config, ['additionalServices', 'home', 'eveHistory'], true),
+            eveLineGraph:
+                defaultValue(config, ['additionalServices', 'home', 'eveLineGraph'], false)
         }
-    }
+    };
 
-    Powerwall = require('./src/accessories/powerwall.js')(Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting);
-    PowerMeter = require('./src/accessories/powermeter.js')(Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting);
+    Powerwall = require('./src/accessories/powerwall.js')(Characteristic, 
+        Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting);
+
+    PowerMeter = require('./src/accessories/powermeter.js')(Characteristic, 
+        Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting);
 
     loadEve();
 }
@@ -184,7 +224,8 @@ TeslaPowerwall.prototype = {
                 additionalServices: {
                     homekitVisual: this.additionalServices.grid.homekitVisual,
                     evePowerMeter: this.additionalServices.grid.positiveEvePowerMeter,
-                    eveHistory:    this.additionalServices.grid.eveHistory
+                    eveHistory:    this.additionalServices.grid.eveHistory,
+                    eveLineGraph:  this.additionalServices.grid.eveLineGraph
                 }
             };
             accessories.push(new PowerMeter(this.log, gridConfig));
@@ -205,7 +246,8 @@ TeslaPowerwall.prototype = {
                     additionalServices: {
                         homekitVisual: false,
                         evePowerMeter: true,
-                        eveHistory:    this.additionalServices.grid.eveHistory
+                        eveHistory:    this.additionalServices.grid.eveHistory,
+                        eveLineGraph:  false
                     }
                 };
                 accessories.push(new PowerMeter(this.log, negGridConfig));
@@ -224,7 +266,8 @@ TeslaPowerwall.prototype = {
                 additionalServices: {
                     homekitVisual: this.additionalServices.battery.homekitVisual,
                     evePowerMeter: this.additionalServices.battery.positiveEvePowerMeter,
-                    eveHistory:    this.additionalServices.battery.eveHistory
+                    eveHistory:    this.additionalServices.battery.eveHistory,
+                    eveLineGraph:  this.additionalServices.battery.eveLineGraph
                 }
             };
             accessories.push(new PowerMeter(this.log, batteryConfig));
@@ -245,7 +288,8 @@ TeslaPowerwall.prototype = {
                     additionalServices: {
                         homekitVisual: false,
                         evePowerMeter: true,
-                        eveHistory:    this.additionalServices.battery.eveHistory
+                        eveHistory:    this.additionalServices.battery.eveHistory,
+                        eveLineGraph:  false
                     }
                 };
                 accessories.push(new PowerMeter(this.log, negBatteryConfig));
@@ -264,7 +308,8 @@ TeslaPowerwall.prototype = {
                 additionalServices: {
                     homekitVisual: this.additionalServices.home.homekitVisual,
                     evePowerMeter: this.additionalServices.home.evePowerMeter,
-                    eveHistory:    this.additionalServices.home.eveHistory
+                    eveHistory:    this.additionalServices.home.eveHistory,
+                    eveLineGraph:  this.additionalServices.battery.eveLineGraph
                 }
             };
             accessories.push(new PowerMeter(this.log, homeConfig));
@@ -363,4 +408,17 @@ var loadEve = function() {
             });
     };
     inherits(Service.WeatherService, Service);
+};
+
+var defaultValue = function(start, listOfAttr, fallback) {
+    var result = start;
+    for (var att in listOfAttr) {
+        if (result === undefined || result === null || !(result === true || result === false)) {
+            return fallback;
+        }
+
+        result = result[listOfAttr[att]];
+    }
+
+    return result;
 };
