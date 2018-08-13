@@ -8,9 +8,7 @@
 //
 //
 // TODO:
-// - Replace Request with cached request
 // - Switch for automation?????
-// - Centralize Data conversion for polling and getting
 // - Documenting
 // - pictures for github
 // - moooar line-diagramms!

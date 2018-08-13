@@ -3,7 +3,7 @@ var moment   = require('moment');
 
 var Polling = require('../helper/polling.js');
 var eventPolling = require('../helper/simple-event-polling.js');
-var reset = require('../helper/value-resetter.js');
+var reset = require('../helper/event-value-resetter.js');
 
 var Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting;
 
@@ -112,10 +112,7 @@ PowerMeter.prototype = {
 
     setOnWattVisualizer: function(state, callback) {
         callback();
-        reset(
-            this.wattVisualizer, 
-            Characteristic.On, 
-            this.getOnWattVisualizer.bind(this));
+        reset(this.wattVisualizer, Characteristic.On);
     },
 
     getRotSpWattVisualizer: function(callback) {
@@ -126,10 +123,7 @@ PowerMeter.prototype = {
 
     setRotSpWattVisualizer: function(state, callback) {
         callback();
-        reset(
-            this.wattVisualizer, 
-            Characteristic.RotationSpeed, 
-            this.getRotSpWattVisualizer.bind(this));
+        reset(this.wattVisualizer, Characteristic.RotationSpeed);
     },
 };
 

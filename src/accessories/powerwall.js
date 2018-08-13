@@ -3,7 +3,7 @@ var moment   = require('moment');
 
 var Polling = require('../helper/polling.js');
 var eventPolling = require('../helper/simple-event-polling.js');
-var reset = require('../helper/value-resetter.js');
+var reset = require('../helper/event-value-resetter.js');
 
 var _httpGetRequest = require('../helper/my-http-request.js');
 var _checkRequestError = require('../helper/check-for-request-error.js');
@@ -157,11 +157,7 @@ Powerwall.prototype = {
             callback(error);
         }.bind(this));
 
-        reset(
-            this.stateSwitch, 
-            Characteristic.On, 
-            this.getStateSwitch.bind(this), 
-            1000 * 4);
+        reset(this.stateSwitch, Characteristic.On, 1000 * 4);
     },
 
     getBatteryLevel: function(callback) {
@@ -188,10 +184,7 @@ Powerwall.prototype = {
 
     setOnBatteryVisualizer: function(state, callback) {
         callback();
-        reset(
-            this.batteryVisualizer, 
-            Characteristic.On, 
-            this.getOnBatteryVisualizer.bind(this));
+        reset( this.batteryVisualizer, Characteristic.On);
     },
     getHueBatteryVisualizer: function(callback) {
         this.percentageGetter.requestValue(function(error, value) {
@@ -201,17 +194,11 @@ Powerwall.prototype = {
 
     setHueBatteryVisualizer: function(state, callback) {
         callback();
-        reset(
-            this.batteryVisualizer, 
-            Characteristic.Hue, 
-            this.getHueBatteryVisualizer.bind(this));
+        reset(this.batteryVisualizer, Characteristic.Hue);
     },
 
     setBrightnessBatteryVisualizer: function(state, callback) {
         callback();
-        reset(
-            this.batteryVisualizer, 
-            Characteristic.Brightness, 
-            this.getBrightnessBatteryVisualizer.bind(this));
+        reset(this.batteryVisualizer, Characteristic.Brightness);
     }
 };
