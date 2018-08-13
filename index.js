@@ -9,22 +9,29 @@
 //
 // TODO:
 // - Replace Request with cached request
-// - Let User specify how many services
-// - Let User specify how to save power meter history
+// - Switch for automation?????
+// - Centralize Data conversion for polling and getting
+// - Documenting
+// - pictures for github
+// - moooar line-diagramms!
+// - custom homekit icons via homebridge????
 //
 
 'use strict';
 
 var Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting;
 var inherits = require('util').inherits;
-var request  = require('request');
-var moment   = require('moment');
+
+var ValueGetter = require('./src/helper/value-getter.js');
+var Powerwall, PowerMeter;
 
 module.exports = function(homebridge) {
     Service                = homebridge.hap.Service;
     Characteristic         = homebridge.hap.Characteristic;
     Accessory              = homebridge.hap.Accessory;
     FakeGatoHistoryService = require('fakegato-history')(homebridge);
+
+
     homebridge.registerPlatform(
         'homebridge-tesla-powerwall', 'TeslaPowerwall', TeslaPowerwall);
 };
@@ -110,95 +117,10 @@ function TeslaPowerwall(log, config) {
         }
     }
 
+    Powerwall = require('./src/accessories/powerwall.js')(Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting);
+    PowerMeter = require('./src/accessories/powermeter.js')(Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting);
 
-    //-----------------------------------------------------------------------//
-    // Setup Eve Characteristics and Services
-    //-----------------------------------------------------------------------//
-    // https://github.com/simont77/fakegato-history
-    
-    // Load custom (Eve) Characteristics
-    Characteristic.CurrentPowerConsumption = function() {
-        Characteristic.call(this, 'Consumption', 'E863F10D-079E-48FF-8F27-9C2605A29F52');
-        this.setProps({
-            format: Characteristic.Formats.UINT16,
-            unit: 'Watts',
-            maxValue: 100000,
-            minValue: 0,
-            minStep: 1,
-            perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
-        });
-        this.value = this.getDefaultValue();
-    };
-    Characteristic.CurrentPowerConsumption.UUID = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
-    inherits(Characteristic.CurrentPowerConsumption, Characteristic);
-
-    Characteristic.TotalConsumption = function() {
-        Characteristic.call(this, 'Energy', 'E863F10C-079E-48FF-8F27-9C2605A29F52');
-        this.setProps({
-            format: Characteristic.Formats.FLOAT,
-            unit: 'kWh',
-            maxValue: 100000000000,
-            minValue: 0,
-            minStep: 0.001,
-            perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
-        });
-        this.value = this.getDefaultValue();
-    };
-    Characteristic.TotalConsumption.UUID = 'E863F10C-079E-48FF-8F27-9C2605A29F52';
-    inherits(Characteristic.TotalConsumption, Characteristic);
-
-    Characteristic.ResetTotal = function() {
-        Characteristic.call(this, 'Reset', 'E863F112-079E-48FF-8F27-9C2605A29F52');
-        this.setProps({
-            format: Characteristic.Formats.UINT32,
-            perms: [
-                Characteristic.Perms.READ, 
-                Characteristic.Perms.NOTIFY, 
-                Characteristic.Perms.WRITE]
-        });
-        this.value = this.getDefaultValue();
-    };
-    Characteristic.ResetTotal.UUID = 'E863F112-079E-48FF-8F27-9C2605A29F52';
-    inherits(Characteristic.ResetTotal, Characteristic);
-
-    Characteristic.AirPressure = function () {
-        Characteristic.call(this, 'Air Pressure', 'E863F10F-079E-48FF-8F27-9C2605A29F52');
-        this.setProps({
-            format: Characteristic.Formats.UINT16,
-            unit: 'mBar',
-            maxValue: 1100,
-            minValue: 700,
-            minStep: 1,
-            perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
-        });
-        this.value = this.getDefaultValue();
-    };
-    inherits(Characteristic.AirPressure, Characteristic);
-
-    // Load custom (Eve) Services
-    Service.PowerMeterService = function(name, uuid, subtype) {
-        if (!uuid) {
-            uuid =  '00000001-0000-1777-8000-775D67EC4377';
-        }
-        Service.call(this, name, uuid, subtype);
-        this.addCharacteristic(Characteristic.CurrentPowerConsumption);
-        this.addCharacteristic(Characteristic.TotalConsumption);
-        this.addCharacteristic(Characteristic.ResetTotal);
-    };
-    inherits(Service.PowerMeterService, Service);
-
-    Service.WeatherService = function (displayName, subtype) {
-        Service.call(this, displayName, 'E863F001-079E-48FF-8F27-9C2605A29F52', subtype);
-        this.addCharacteristic(Characteristic.CurrentTemperature);
-        this.addCharacteristic(Characteristic.CurrentRelativeHumidity);
-        this.addCharacteristic(Characteristic.AirPressure);
-        this.getCharacteristic(Characteristic.CurrentTemperature)
-            .setProps({
-                minValue: -40,
-                maxValue: 60
-            });
-    };
-    inherits(Service.WeatherService, Service);
+    loadEve();
 }
 
 TeslaPowerwall.prototype = {
@@ -354,544 +276,93 @@ TeslaPowerwall.prototype = {
     }
 };
 
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Accessories
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-
-// TODO:
-// - History
-// - Centralize Data conversion for polling and getting
-//
-function Powerwall(log, config) {
-    this.log = log;
-
-    this.displayName      = config.displayName; // for fakegato
-    this.name             = config.displayName; // for homebridge
-    this.pollingInterval  = config.pollingInterval;
-    this.historyInterval  = config.historyInterval;
-    this.lowBattery       = config.lowBattery;
-    this.uniqueId         = config.uniqueId;
-
-    this.onStatusGetter   = config.onStatusGetter;
-    this.percentageGetter = config.percentageGetter;
-    this.chargingGetter   = config.chargingGetter;
-
-    this.additionalServices = config.additionalServices;
-
-    this.stopUrl = config.stopUrl;
-    this.startUrl = config.startUrl;
-
-    inherits(Powerwall, Accessory);
-}
-
-
-Powerwall.prototype = {
-
-    getServices: function() {
-        // Create services
-        var services = [];
-
-        var info = new Service.AccessoryInformation();
-        info.setCharacteristic(Characteristic.Name, this.name)
-            .setCharacteristic(Characteristic.Manufacturer, 'Tesla')
-            .setCharacteristic(Characteristic.Model, 'Powerwall2')
-            .setCharacteristic(Characteristic.FirmwareRevision, '-')
-            .setCharacteristic(Characteristic.SerialNumber, this.uniqueId);
-        services.push(info);
-        
-        this.stateSwitch = new Service.Switch(this.name);
-        this.stateSwitch
-            .getCharacteristic(Characteristic.On)
-            .on('get', this.getStateSwitch.bind(this))
-            .on('set', this.setStateSwitch.bind(this));
-        services.push(this.stateSwitch);
-
-        this.battery = 
-            new Service.BatteryService(this.name + ' ' + 'Battery');
-        this.battery
-            .getCharacteristic(Characteristic.BatteryLevel)
-            .on('get', this.getBatteryLevel.bind(this));
-        this.battery
-            .getCharacteristic(Characteristic.ChargingState)
-            .on('get', this.getChargingState.bind(this));
-        this.battery
-            .getCharacteristic(Characteristic.StatusLowBattery)
-            .on('get', this.getLowBattery.bind(this));
-        services.push(this.battery);
-
-        if (this.additionalServices.homekitVisual) {
-            this.batteryVisualizer = 
-                new Service.Lightbulb(this.name + ' ' + 'Charge');
-            this.batteryVisualizer
-                .getCharacteristic(Characteristic.On)
-                .on('get', this.getOnBatteryVisualizer.bind(this))
-                .on('set', this.setOnBatteryVisualizer.bind(this));
-            this.batteryVisualizer
-                .getCharacteristic(Characteristic.Hue)
-                .on('get', this.getHueBatteryVisualizer.bind(this))
-                .on('set', this.setHueBatteryVisualizer.bind(this));
-            this.batteryVisualizer
-                .getCharacteristic(Characteristic.Brightness)
-                .on('get', this.getBrightnessBatteryVisualizer.bind(this))
-                .on('set', this.setBrightnessBatteryVisualizer.bind(this));
-            services.push(this.batteryVisualizer);
-        }
-
-        if (this.additionalServices.eveHistory) {
-
-            // Eve Weather abused for battery charge history
-            this.batteryCharge = new Service.WeatherService(
-                this.name + ' ' + 'Battery' + ' History');
-            this.batteryCharge.getCharacteristic(Characteristic.CurrentTemperature)
-                .setProps({
-                    minValue: 0,
-                    maxValue: 100
-                });
-            services.push(this.batteryCharge);
-
-            this.batteryChargeHistory = 
-                new FakeGatoHistoryService('weather', this, FakeGatoHistorySetting);
-            services.push(this.batteryChargeHistory);
-        }
-
-        //
-        // Polling
-        var onStatusLowPolling = new Polling(this.onStatusGetter, this.pollingInterval);
-        onStatusLowPolling.pollValue(function(error, value) {
-            this.stateSwitch
-                .getCharacteristic(Characteristic.On)
-                .updateValue(value);
-        }.bind(this));
-
-        var percentagePolling = new Polling(this.percentageGetter, this.pollingInterval);
-        percentagePolling.pollValue(function(error, value) {
-            this.battery
-                .getCharacteristic(Characteristic.BatteryLevel)
-                .updateValue(value);
-            this.battery
-                .getCharacteristic(Characteristic.StatusLowBattery)
-                .updateValue(value <= this.lowBattery);
-
-            if (this.additionalServices.homekitVisual) {
-                this.batteryVisualizer
-                    .getCharacteristic(Characteristic.On)
-                    .updateValue(value !== 0);
-                this.batteryVisualizer
-                    .getCharacteristic(Characteristic.Hue)
-                    .updateValue((value/100) * 120);
-                this.batteryVisualizer
-                    .getCharacteristic(Characteristic.Brightness)
-                    .updateValue(value);
-            }
-
-            if (this.additionalServices.eveHistory) {
-                this.batteryCharge
-                    .getCharacteristic(Characteristic.CurrentRelativeHumidity)
-                    .updateValue(value);
-                this.batteryCharge
-                    .getCharacteristic(Characteristic.CurrentTemperature)
-                    .updateValue(value);
-            }
-        }.bind(this));
-
-        var chargingPolling = new Polling(this.chargingGetter, this.pollingInterval);
-        chargingPolling.pollValue(function(error, value) {
-            this.battery
-                .getCharacteristic(Characteristic.ChargingState)
-                .updateValue(value < 0);
-        }.bind(this));
-
-        // history
-        if (this.additionalServices.eveHistory) {
-            var percentageHistory = new Polling(this.percentageGetter, this.historyInterval);
-            percentageHistory.pollValue(function(error, value) {
-                this.log('history');
-                this.batteryChargeHistory.addEntry(
-                    {time: moment().unix(), humidity: value});
-            }.bind(this));
-        }
-
-        return services;
-    },
-
-    getStateSwitch: function(callback) {
-        this.onStatusGetter.requestValue(callback);
-    },
-
-    setStateSwitch: function(state, callback) {
-        var url;
-
-        if (state) {
-            url = this.startUrl;
-        } else {
-            url = this.stopUrl;
-        }
-
-        _httpGetRequest(url, function(error, response, body) {
-            _checkRequestError(this.log, error, response, body);
-            callback(error);
-        }.bind(this));
-
-        reset(
-            this.stateSwitch, 
-            Characteristic.On, 
-            this.getStateSwitch.bind(this), 
-            1000 * 4);
-    },
-
-    getBatteryLevel: function(callback) {
-        this.percentageGetter.requestValue(callback);
-    },
-
-    getChargingState: function(callback) {
-        this.chargingGetter.requestValue(function(error, value) {
-            callback(error, value < 0);
-        }.bind(this));
-    },
-
-    getLowBattery: function(callback) {
-        this.percentageGetter.requestValue(function(error, value) {
-            callback(error, value <= this.lowBattery);
-        }.bind(this));
-    },
-
-    getOnBatteryVisualizer: function(callback) {
-        this.percentageGetter.requestValue(function(error, value) {
-            callback(error, value !== 0);
-        }.bind(this));
-    },
-
-    setOnBatteryVisualizer: function(state, callback) {
-        callback();
-        reset(
-            this.batteryVisualizer, 
-            Characteristic.On, 
-            this.getOnBatteryVisualizer.bind(this));
-    },
-    getHueBatteryVisualizer: function(callback) {
-        this.percentageGetter.requestValue(function(error, value) {
-            callback(error, (value/100) * 120 );
-        }.bind(this));
-    },
-
-    setHueBatteryVisualizer: function(state, callback) {
-        callback();
-        reset(
-            this.batteryVisualizer, 
-            Characteristic.Hue, 
-            this.getHueBatteryVisualizer.bind(this));
-    },
-    getBrightnessBatteryVisualizer: function(callback) {
-        this.percentageGetter.requestValue(callback);
-    },
-
-    setBrightnessBatteryVisualizer: function(state, callback) {
-        callback();
-        reset(
-            this.batteryVisualizer, 
-            Characteristic.Brightness, 
-            this.getBrightnessBatteryVisualizer.bind(this));
-    }
-};
-
-// PowerMeter
-//
-// TODO:
-// - Let User specify AccessoryInformation
-//
-function PowerMeter(log, config) {
-    this.log = log;
-
-    this.displayName      = config.displayName; // for fakegato
-    this.name             = config.displayName; // for homebridge
-    this.uniqueId         = config.uniqueId;
-    this.pollingInterval  = config.pollingInterval;
-    this.historyInterval  = config.historyInterval;
-    this.wattGetter       = config.wattGetter;
-
-    this.additionalServices = config.additionalServices;
+var loadEve = function() {
+    //-----------------------------------------------------------------------//
+    // Setup Eve Characteristics and Services
+    //-----------------------------------------------------------------------//
+    // https://github.com/simont77/fakegato-history
     
-    inherits(PowerMeter, Accessory);
-}
-
-
-PowerMeter.prototype = {
-
-    getServices: function() {
-        var services = [];
-        var info = new Service.AccessoryInformation();
-        info.setCharacteristic(Characteristic.Name, this.name)
-            .setCharacteristic(Characteristic.Manufacturer, 'Tesla')
-            .setCharacteristic(Characteristic.Model, 'Power Meter')
-            .setCharacteristic(Characteristic.FirmwareRevision, '-')
-            .setCharacteristic(Characteristic.SerialNumber, this.uniqueId);
-        services.push(info);
-
-        if (this.additionalServices.homekitVisual) {
-            this.wattVisualizer = new Service.Fan(this.name + ' ' + 'Flow');
-            this.wattVisualizer
-                .getCharacteristic(Characteristic.On)
-                .on('get', this.getOnWattVisualizer.bind(this))
-                .on('set', this.setOnWattVisualizer.bind(this));
-            this.wattVisualizer
-                .getCharacteristic(Characteristic.RotationSpeed)
-                .setProps({maxValue: 100, minValue: -100, minStep: 1})
-                .on('get', this.getRotSpWattVisualizer.bind(this))
-                .on('set', this.setRotSpWattVisualizer.bind(this));
-            services.push(this.wattVisualizer);
-        }
-
-        // Eve Powermeter
-        
-        if (this.additionalServices.evePowerMeter) {
-            this.powerConsumption = new Service.PowerMeterService(
-                this.name + ' ' + 
-                'Power Meter');
-            services.push(this.powerConsumption);
-        }
-
-        if (this.additionalServices.evePowerMeter &&
-            this.additionalServices.eveHistory) {
-            this.powerMeterHistory = 
-                new FakeGatoHistoryService('energy', this, FakeGatoHistorySetting);
-            services.push(this.powerMeterHistory);
-        }
-
-        // Polling
-        var wattPolling = new Polling(this.wattGetter, this.pollingInterval);
-        wattPolling.pollValue(function(error, value) {
-            if (this.additionalServices.homekitVisual) {
-                this.wattVisualizer
-                    .getCharacteristic(Characteristic.On)
-                    .updateValue(Math.round(value / 100) !== 0);
-                this.wattVisualizer
-                    .getCharacteristic(Characteristic.RotationSpeed)
-                    .updateValue(value / 100);
-            }
-
-            if (this.additionalServices.evePowerMeter) {
-                this.powerConsumption
-                    .getCharacteristic(Characteristic.CurrentPowerConsumption)
-                    .updateValue(value);
-            }
-        }.bind(this));
-
-        // History
-        if (this.additionalServices.evePowerMeter &&
-            this.additionalServices.eveHistory) {
-            var wattHistory = new Polling(this.wattGetter, this.historyInterval);
-            wattHistory.pollValue(function(error, value) {
-                // set negative values to 0
-                if (value < 0) {
-                    value = 0;
-                }
-                this.log.debug('Watt History value: ' + value);
-                this.powerMeterHistory.addEntry(
-                    {time: moment().unix(), power: value});
-            }.bind(this));
-        }
-
-        return services;
-    },
-
-    getOnWattVisualizer: function(callback) {
-        this.wattGetter.requestValue(function(error, value) {
-            callback(error, Math.round(value/100) !== 0);
+    // Load custom (Eve) Characteristics
+    Characteristic.CurrentPowerConsumption = function() {
+        Characteristic.call(this, 'Consumption', 'E863F10D-079E-48FF-8F27-9C2605A29F52');
+        this.setProps({
+            format: Characteristic.Formats.UINT16,
+            unit: 'Watts',
+            maxValue: 100000,
+            minValue: 0,
+            minStep: 1,
+            perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
         });
-    },
+        this.value = this.getDefaultValue();
+    };
+    Characteristic.CurrentPowerConsumption.UUID = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
+    inherits(Characteristic.CurrentPowerConsumption, Characteristic);
 
-    setOnWattVisualizer: function(state, callback) {
-        callback();
-        reset(
-            this.wattVisualizer, 
-            Characteristic.On, 
-            this.getOnWattVisualizer.bind(this));
-    },
-
-    getRotSpWattVisualizer: function(callback) {
-        this.wattGetter.requestValue(function(error, value) {
-            callback(error, value / 100); // 100 % = 10_000W
+    Characteristic.TotalConsumption = function() {
+        Characteristic.call(this, 'Energy', 'E863F10C-079E-48FF-8F27-9C2605A29F52');
+        this.setProps({
+            format: Characteristic.Formats.FLOAT,
+            unit: 'kWh',
+            maxValue: 100000000000,
+            minValue: 0,
+            minStep: 0.001,
+            perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
         });
-    },
+        this.value = this.getDefaultValue();
+    };
+    Characteristic.TotalConsumption.UUID = 'E863F10C-079E-48FF-8F27-9C2605A29F52';
+    inherits(Characteristic.TotalConsumption, Characteristic);
 
-    setRotSpWattVisualizer: function(state, callback) {
-        callback();
-        reset(
-            this.wattVisualizer, 
-            Characteristic.RotationSpeed, 
-            this.getRotSpWattVisualizer.bind(this));
-    },
-};
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Polling
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// TODO:
-// - Documenting
-// - Testing
-function Polling(valueGetter, pollTimer) {
-    if (!pollTimer) {
-        // default value without ECMAscript 6 features
-        pollTimer = 1000;
-    }
-
-    this.nextUpdate  = moment().unix();
-    this.cache       = 0;
-    this.error       = null;
-    this.valueGetter = valueGetter;
-
-    this.waiting = [];
-
-    this.pollCallback = function(){};
-
-    this.update(); 
-
-    // start polling:
-    setInterval(this.update.bind(this), pollTimer);
-}
-
-Polling.prototype = {
-
-    pollValue: function(callback) {
-        this.pollCallback = callback;
-    },
-
-    update: function() {
-        this.valueGetter.requestValue(function(error, newValue) {
-            this.cache = newValue;
-            this.pollCallback(error, newValue);
-        }.bind(this));
-    }
-};
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Value Resetter
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-/**
- * Resets a characteristic of a service by using a getter callback with a 
- * specific delay
- */
-var reset = function(service, characteristic, getterByCallback, delay){
-    if (!delay) {
-        // default value without ECMAscript 6 features
-        delay = 1000;
-    }
-
-    setTimeout(function() {
-        getterByCallback(function(error, newValue) {
-            service
-                .getCharacteristic(characteristic)
-                .updateValue(newValue);
+    Characteristic.ResetTotal = function() {
+        Characteristic.call(this, 'Reset', 'E863F112-079E-48FF-8F27-9C2605A29F52');
+        this.setProps({
+            format: Characteristic.Formats.UINT32,
+            perms: [
+                Characteristic.Perms.READ, 
+                Characteristic.Perms.NOTIFY, 
+                Characteristic.Perms.WRITE]
         });
-    }, delay);
-};
+        this.value = this.getDefaultValue();
+    };
+    Characteristic.ResetTotal.UUID = 'E863F112-079E-48FF-8F27-9C2605A29F52';
+    inherits(Characteristic.ResetTotal, Characteristic);
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Value Getter
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// TODO:
-// - Documenting
-// - Testing
-function ValueGetter(log, address, attributes, defaultValue, manipulate) {
-    this.log          = log;
-    this.address      = address;
-    this.attributes   = attributes; // array of strings
-    this.defaultValue = defaultValue;
+    Characteristic.AirPressure = function () {
+        Characteristic.call(this, 'Air Pressure', 'E863F10F-079E-48FF-8F27-9C2605A29F52');
+        this.setProps({
+            format: Characteristic.Formats.UINT16,
+            unit: 'mBar',
+            maxValue: 1100,
+            minValue: 700,
+            minStep: 1,
+            perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
+        });
+        this.value = this.getDefaultValue();
+    };
+    inherits(Characteristic.AirPressure, Characteristic);
 
-    if (!manipulate) {
-        this.manipulate = function(id) {return id;};
-    } else {
-        this.manipulate = manipulate;
-    }
-}
-
-ValueGetter.prototype = {
-
-    requestValue: function(callback) {
-        _httpGetRequest(
-            this.address,
-            function(error, response, body) {
-                var result;
-                if (_checkRequestError(this.log, error, response, body)) {
-                    callback(error, this.manipulate(this.defaultValue));
-                } else {
-                    result = _parseJSON(body);
-                    for (var att in this.attributes) {
-                        if (result === undefined || result === null) {
-                            this.log.debug('Error while parsing Attributes!');
-                            this.log.debug('Attributes: ' + this.attributes);
-                            callback(null, this.manipulate(this.defaultValue));
-                            return;
-                        }
-
-                        result = result[this.attributes[att]];
-                    }
-                    callback(null, this.manipulate(result));
-                }
-            }.bind(this));
-    }
-};
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Utility Functions
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-/**
- * Creates an insecure (ignores certificate warnings) GET request for the given 
- * url
- *
- * @param {string} url URL of the request.
- * @param {function} callback Callback method for handling the response.
- */
-var _httpGetRequest = function(url, callback) {
-    request({
-        url: url,
-        method: 'GET',
-        agentOptions: {
-            rejectUnauthorized: false
+    // Load custom (Eve) Services
+    Service.PowerMeterService = function(name, uuid, subtype) {
+        if (!uuid) {
+            uuid =  '00000001-0000-1777-8000-775D67EC4377';
         }
-    },
-    function(error, response, body) {
-        callback(error, response, body);
-    });
-};
+        Service.call(this, name, uuid, subtype);
+        this.addCharacteristic(Characteristic.CurrentPowerConsumption);
+        this.addCharacteristic(Characteristic.TotalConsumption);
+        this.addCharacteristic(Characteristic.ResetTotal);
+    };
+    inherits(Service.PowerMeterService, Service);
 
-/**
- * Checks if an error is given and prints it and returns true.
- * Otherwise it just returns false.
- *
- * @param {string} error Error object returned by request.
- * @param {response} response Response object returned by request.
- * @param {string} body Body returned by request.
- */
-var _checkRequestError = function(log, error, response, body) {
-    if (error) {
-        log('error: ', error);
-        log('status code: ', response && response.statusCode);
-        log('body: ', body);
-        return true;
-    }
-    log.debug('error: ', error);
-    log.debug('status code: ', response && response.statusCode);
-    log.debug('body: ', body);
-
-    return false;
-};
-
-/**
- * Parse JSON string into an object
- *
- * @param {string} str String in JSON form.
- */
-var _parseJSON = function(str) {
-    var obj = null;
-    try {
-        obj =  JSON.parse(str);
-    } catch(e) {
-        obj = null;
-    }
-    return obj;
+    Service.WeatherService = function (displayName, subtype) {
+        Service.call(this, displayName, 'E863F001-079E-48FF-8F27-9C2605A29F52', subtype);
+        this.addCharacteristic(Characteristic.CurrentTemperature);
+        this.addCharacteristic(Characteristic.CurrentRelativeHumidity);
+        this.addCharacteristic(Characteristic.AirPressure);
+        this.getCharacteristic(Characteristic.CurrentTemperature)
+            .setProps({
+                minValue: -40,
+                maxValue: 60
+            });
+    };
+    inherits(Service.WeatherService, Service);
 };

@@ -30,12 +30,10 @@ var PlatformType = Homebridge.PlatformType;
 // - Correct values from the server
 // - Correct connections
 // - Correct Services included
-// - If normal Eve Services are registered
 //
 // Testing does NOT include:
 // - updating/polling
-// - Eve stuff (need to implement it via events (not just via polling)
-// - Eve History (need to create a mock or sth
+// - Eve stuff (need to implement it via events (not just via polling))
 //
 
 describe('Register Platform', function() {
@@ -198,6 +196,19 @@ describe('Platform Configs', function() {
                                 });
                             });
                         });
+                        describe('Eve (Weather) History', function() {
+                            var serv;
+                            services.forEach(function(s) {
+                                // instanceof did not work...
+                                if (s && s.addEntry && s.accessoryType === 'weather') {
+                                    serv = s;
+                                }
+                            });
+
+                            it('should be included', function() {
+                                assert.ok(serv);
+                            });
+                        });
                     });
                 });
                 describe('Solar Powermeter', function() {
@@ -219,6 +230,19 @@ describe('Platform Configs', function() {
                             var serv;
                             services.forEach(function(s) {
                                 if (s instanceof Service.PowerMeterService) {
+                                    serv = s;
+                                }
+                            });
+
+                            it('should be included', function() {
+                                assert.ok(serv);
+                            });
+                        });
+                        describe('Eve (Energy) History', function() {
+                            var serv;
+                            services.forEach(function(s) {
+                                // instanceof did not work...
+                                if (s && s.addEntry && s.accessoryType === 'energy') {
                                     serv = s;
                                 }
                             });
@@ -294,6 +318,19 @@ describe('Platform Configs', function() {
                                 assert.ok(serv);
                             });
                         });
+                        describe('Eve (Energy) History', function() {
+                            var serv;
+                            services.forEach(function(s) {
+                                // instanceof did not work...
+                                if (s && s.addEntry && s.accessoryType === 'energy') {
+                                    serv = s;
+                                }
+                            });
+
+                            it('should be included', function() {
+                                assert.ok(serv);
+                            });
+                        });
                         describe('Homekit visual', function() {
                             var serv;
                             services.forEach(function(s) {
@@ -361,6 +398,19 @@ describe('Platform Configs', function() {
                                 assert.ok(serv);
                             });
                         });
+                        describe('Eve (Energy) History', function() {
+                            var serv;
+                            services.forEach(function(s) {
+                                // instanceof did not work...
+                                if (s && s.addEntry && s.accessoryType === 'energy') {
+                                    serv = s;
+                                }
+                            });
+
+                            it('should be included', function() {
+                                assert.ok(serv);
+                            });
+                        });
                     });
                 });
                 describe('Battery Powermeter', function() {
@@ -382,6 +432,19 @@ describe('Platform Configs', function() {
                             var serv;
                             services.forEach(function(s) {
                                 if (s instanceof Service.PowerMeterService) {
+                                    serv = s;
+                                }
+                            });
+
+                            it('should be included', function() {
+                                assert.ok(serv);
+                            });
+                        });
+                        describe('Eve (Energy) History', function() {
+                            var serv;
+                            services.forEach(function(s) {
+                                // instanceof did not work...
+                                if (s && s.addEntry && s.accessoryType === 'energy') {
                                     serv = s;
                                 }
                             });
@@ -457,6 +520,19 @@ describe('Platform Configs', function() {
                                 assert.ok(serv);
                             });
                         });
+                        describe('Eve (Energy) History', function() {
+                            var serv;
+                            services.forEach(function(s) {
+                                // instanceof did not work...
+                                if (s && s.addEntry && s.accessoryType === 'energy') {
+                                    serv = s;
+                                }
+                            });
+
+                            it('should be included', function() {
+                                assert.ok(serv);
+                            });
+                        });
                     });
                 });
                 describe('Home Powermeter', function() {
@@ -478,6 +554,19 @@ describe('Platform Configs', function() {
                             var serv;
                             services.forEach(function(s) {
                                 if (s instanceof Service.PowerMeterService) {
+                                    serv = s;
+                                }
+                            });
+
+                            it('should be included', function() {
+                                assert.ok(serv);
+                            });
+                        });
+                        describe('Eve (Energy) History', function() {
+                            var serv;
+                            services.forEach(function(s) {
+                                // instanceof did not work...
+                                if (s && s.addEntry && s.accessoryType === 'energy') {
                                     serv = s;
                                 }
                             });
