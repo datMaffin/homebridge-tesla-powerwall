@@ -1,17 +1,15 @@
-var inherits = require('util').inherits;
 var moment   = require('moment');
 
 var Polling = require('../helper/polling.js');
 var eventPolling = require('../helper/simple-event-polling.js');
 var reset = require('../helper/event-value-resetter.js');
 
-var Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting;
+var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 
 module.exports = function(characteristic, service, fakegatohistoryservice, accessory, fakegatohistorysetting) {
     Characteristic = characteristic;
     Service = service;
     FakeGatoHistoryService = fakegatohistoryservice;
-    Accessory = accessory;
     FakeGatoHistorySetting = fakegatohistorysetting;
 
     return PowerMeter;
@@ -30,8 +28,6 @@ function PowerMeter(log, config) {
     this.wattGetter       = config.wattGetter;
 
     this.additionalServices = config.additionalServices;
-    
-    inherits(PowerMeter, Accessory);
 }
 
 
@@ -53,13 +49,13 @@ PowerMeter.prototype = {
                 .getCharacteristic(Characteristic.On)
                 .on('get', this.getOnWattVisualizer.bind(this))
                 .on('set', this.setOnWattVisualizer.bind(this));
-            eventPolling(this.wattVisualizer, Characteristic.On);
+            eventPolling(this.wattVisualizer, Characteristic.On, this.pollingInterval);
             this.wattVisualizer
                 .getCharacteristic(Characteristic.RotationSpeed)
                 .setProps({maxValue: 100, minValue: -100, minStep: 1})
                 .on('get', this.getRotSpWattVisualizer.bind(this))
                 .on('set', this.setRotSpWattVisualizer.bind(this));
-            eventPolling(this.wattVisualizer, Characteristic.RotationSpeed);
+            eventPolling(this.wattVisualizer, Characteristic.RotationSpeed, this.pollingInterval);
             services.push(this.wattVisualizer);
         }
 
@@ -72,7 +68,7 @@ PowerMeter.prototype = {
             this.powerConsumption
                 .getCharacteristic(Characteristic.CurrentPowerConsumption)
                 .on('get', this.getWatt.bind(this));
-            eventPolling(this.powerConsumption, Characteristic.CurrentPowerConsumption);
+            eventPolling(this.powerConsumption, Characteristic.CurrentPowerConsumption, this.pollingInterval);
             services.push(this.powerConsumption);
         }
 

@@ -1,4 +1,3 @@
-var inherits = require('util').inherits;
 var moment   = require('moment');
 
 var Polling = require('../helper/polling.js');
@@ -9,13 +8,12 @@ var _httpGetRequest = require('../helper/my-http-request.js');
 var _checkRequestError = require('../helper/check-for-request-error.js');
 
 
-var Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting;
+var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 
 module.exports = function(characteristic, service, fakegatohistoryservice, accessory, fakegatohistorysetting) {
     Characteristic = characteristic;
     Service = service;
     FakeGatoHistoryService = fakegatohistoryservice;
-    Accessory = accessory;
     FakeGatoHistorySetting = fakegatohistorysetting;
 
     return Powerwall;
@@ -41,8 +39,6 @@ function Powerwall(log, config) {
 
     this.stopUrl = config.stopUrl;
     this.startUrl = config.startUrl;
-
-    inherits(Powerwall, Accessory);
 }
 
 
@@ -124,8 +120,8 @@ Powerwall.prototype = {
             eventPolling(this.batteryCharge, Characteristic.CurrentRelativeHumidity, this.pollingInterval);
             services.push(this.batteryCharge);
 
-            this.batteryChargeHistory = 
-                new FakeGatoHistoryService('weather', this, FakeGatoHistorySetting);
+
+            this.batteryChargeHistory = new FakeGatoHistoryService('weather', this, FakeGatoHistorySetting);
             services.push(this.batteryChargeHistory);
 
             var percentageHistory = new Polling(this.percentageGetter, this.historyInterval);

@@ -34,6 +34,7 @@ ValueGetter.prototype = {
      * @param {callback} callback The callback the value is given to
      */
     requestValue: function(callback) {
+        this.log.debug('Requesting Value: ' + this.address);
         _httpGetRequest(
             this.address,
             function(error, response, body) {
