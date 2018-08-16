@@ -88,7 +88,7 @@ Optional:
 * *eve power meter* displays total consumption only if the "eveHistory" is true
 * "eveHistory" only works with the corresponding powermeter enabled
 * "eveLineGraph": Saves power data in a weather diagramm to get a nice
-  line chart.
+  line chart. Persistant storage works only if "evePowerMeter" and "eveHistory" are `true`.
 
 ```json
         },

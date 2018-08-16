@@ -6,7 +6,7 @@ var reset = require('../helper/event-value-resetter.js');
 
 var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 
-module.exports = function(characteristic, service, fakegatohistoryservice, accessory, fakegatohistorysetting) {
+module.exports = function(characteristic, service, fakegatohistoryservice, fakegatohistorysetting) {
     Characteristic = characteristic;
     Service = service;
     FakeGatoHistoryService = fakegatohistoryservice;
@@ -95,6 +95,11 @@ PowerMeter.prototype = {
                 this.powerMeterHistory.addEntry(
                     {time: moment().unix(), power: value});
 
+                // hack for weather diagramm and history...
+                this.powerMeterHistory._addEntry(
+                    {time: moment().unix(), temp: value, humidity: 0, ppm: 0});
+                    
+
                 var totalEnergy = 
                     (this.powerMeterHistory.getExtraPersistedData() &&
                      this.powerMeterHistory.getExtraPersistedData().totalEnergy) || 0;
@@ -134,18 +139,6 @@ PowerMeter.prototype = {
                 .on('get', this.getWatt.bind(this));
             eventPolling(this.energyLG, Characteristic.CurrentRelativeHumidity, this.pollingInterval);
             services.push(this.energyLG);
-
-            this.energyLGHistory = 
-                new FakeGatoHistoryService('weather', this, FakeGatoHistorySetting);
-            services.push(this.batteryChargeHistory);
-
-            var lgHistory = new Polling(this.getWatt, this.historyInterval);
-            lgHistory.pollValue(function(error, value) {
-                this.log('lg history');
-                this.energyLGHistory.addEntry(
-                    {time: moment().unix(), humidity: value});
-            }.bind(this));
-
         }
 
         return services;

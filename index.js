@@ -19,7 +19,7 @@
 
 'use strict';
 
-var Characteristic, Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting;
+var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 var inherits = require('util').inherits;
 
 var ValueGetter = require('./src/helper/value-getter.js');
@@ -28,9 +28,7 @@ var Powerwall, PowerMeter;
 module.exports = function(homebridge) {
     Service                = homebridge.hap.Service;
     Characteristic         = homebridge.hap.Characteristic;
-    Accessory              = homebridge.hap.Accessory;
     FakeGatoHistoryService = require('fakegato-history')(homebridge);
-
 
     homebridge.registerPlatform(
         'homebridge-tesla-powerwall', 'TeslaPowerwall', TeslaPowerwall);
@@ -76,9 +74,9 @@ function TeslaPowerwall(log, config) {
             this.startUrl = 'http://' + user + ':' + password + '@' + 
                 ip + '/api/sitemaster/run';
         } else {
-            this.stopUrl  = 'http://' + user + ':' + password + '@' + 
+            this.stopUrl  = 'https://' + user + ':' + password + '@' + 
                 ip + ':' + port + '/api/sitemaster/stop';
-            this.startUrl = 'http://' + user + ':' + password + '@' + 
+            this.startUrl = 'https://' + user + ':' + password + '@' + 
                 ip + ':' + port + '/api/sitemaster/run';
         }
     } else {
@@ -153,10 +151,10 @@ function TeslaPowerwall(log, config) {
     };
 
     Powerwall = require('./src/accessories/powerwall.js')(Characteristic, 
-        Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting);
+        Service, FakeGatoHistoryService, FakeGatoHistorySetting);
 
     PowerMeter = require('./src/accessories/powermeter.js')(Characteristic, 
-        Service, FakeGatoHistoryService, Accessory, FakeGatoHistorySetting);
+        Service, FakeGatoHistoryService, FakeGatoHistorySetting);
 
     loadEve();
 }
@@ -206,7 +204,8 @@ TeslaPowerwall.prototype = {
                 additionalServices: {
                     homekitVisual: this.additionalServices.solar.homekitVisual,
                     evePowerMeter: this.additionalServices.solar.evePowerMeter,
-                    eveHistory:    this.additionalServices.solar.eveHistory
+                    eveHistory:    this.additionalServices.solar.eveHistory,
+                    eveLineGraph:  this.additionalServices.solar.eveLineGraph
                 }
             };
             accessories.push(new PowerMeter(this.log, solarConfig));
@@ -309,7 +308,7 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.home.homekitVisual,
                     evePowerMeter: this.additionalServices.home.evePowerMeter,
                     eveHistory:    this.additionalServices.home.eveHistory,
-                    eveLineGraph:  this.additionalServices.battery.eveLineGraph
+                    eveLineGraph:  this.additionalServices.home.eveLineGraph
                 }
             };
             accessories.push(new PowerMeter(this.log, homeConfig));
@@ -413,12 +412,15 @@ var loadEve = function() {
 var defaultValue = function(start, listOfAttr, fallback) {
     var result = start;
     for (var att in listOfAttr) {
-        if (result === undefined || result === null || !(result === true || result === false)) {
+        if (result === undefined || result === null) {
             return fallback;
         }
 
         result = result[listOfAttr[att]];
     }
 
-    return result;
+    if (result === true || result ===false)
+        return result;
+    else
+        return fallback;
 };
