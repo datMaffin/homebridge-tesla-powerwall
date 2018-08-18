@@ -95,11 +95,6 @@ PowerMeter.prototype = {
                 this.powerMeterHistory.addEntry(
                     {time: moment().unix(), power: value});
 
-                // hack for weather diagramm and history...
-                this.powerMeterHistory._addEntry(
-                    {time: moment().unix(), temp: value, humidity: 0, ppm: 0});
-                    
-
                 var totalEnergy = 
                     (this.powerMeterHistory.getExtraPersistedData() &&
                      this.powerMeterHistory.getExtraPersistedData().totalEnergy) || 0;
@@ -117,28 +112,6 @@ PowerMeter.prototype = {
                     .updateValue(totalEnergy);
 
             }.bind(this));
-        }
-
-        // History with line graph
-        if (this.additionalServices.eveLineGraph) {
-            this.energyLG = new Service.WeatherService(this.name + ' Energy Line Graph');
-            this.energyLG
-                .getCharacteristic(Characteristic.CurrentTemperature)
-                .setProps({
-                    minValue: -10000,
-                    maxValue: 10000
-                })
-                .on('get', this.getWatt.bind(this));
-            eventPolling(this.energyLG, Characteristic.CurrentTemperature, this.pollingInterval);
-            this.energyLG
-                .getCharacteristic(Characteristic.CurrentRelativeHumidity)
-                .setProps({
-                    minValue: -10000,
-                    maxValue: 10000
-                })
-                .on('get', this.getWatt.bind(this));
-            eventPolling(this.energyLG, Characteristic.CurrentRelativeHumidity, this.pollingInterval);
-            services.push(this.energyLG);
         }
 
         return services;
@@ -173,7 +146,7 @@ PowerMeter.prototype = {
     },
 
     setResetTotalConsumption: function(state, callback) {
-        this.powerLoggingService.setExtraPersistedData({ totalEnergy: 0, lastReset: state});
+        this.powerMeterHistory.setExtraPersistedData({ totalEnergy: 0, lastReset: state});
         this.powerConsumption
             .getCharacteristic(Characteristic.TotalConsumption)
             .updateValue(0);

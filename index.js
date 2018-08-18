@@ -8,12 +8,10 @@
 //
 //
 // TODO:
-// - Switch for automation?????
 // - pictures for github
 // - moooar line-diagramms!
 // - fix total consumption
 // - fix stop/run (authentication problem)
-// - custom homekit icons via homebridge????
 // - round all values to better test
 //
 
@@ -23,7 +21,7 @@ var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 var inherits = require('util').inherits;
 
 var ValueGetter = require('./src/helper/value-getter.js');
-var Powerwall, PowerMeter;
+var Powerwall, PowerMeter, PowerMeterLineGraph;
 
 module.exports = function(homebridge) {
     Service                = homebridge.hap.Service;
@@ -156,6 +154,9 @@ function TeslaPowerwall(log, config) {
     PowerMeter = require('./src/accessories/powermeter.js')(Characteristic, 
         Service, FakeGatoHistoryService, FakeGatoHistorySetting);
 
+    PowerMeterLineGraph = require('./src/accessories/powermeter-line-graph.js')(
+        Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting);
+
     loadEve();
 }
 
@@ -205,10 +206,20 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.solar.homekitVisual,
                     evePowerMeter: this.additionalServices.solar.evePowerMeter,
                     eveHistory:    this.additionalServices.solar.eveHistory,
-                    eveLineGraph:  this.additionalServices.solar.eveLineGraph
                 }
             };
             accessories.push(new PowerMeter(this.log, solarConfig));
+
+            if (this.additionalServices.solar.eveLineGraph) {
+                var solarLineGraphConfig = {
+                    displayName:     'Solar Line Graph',
+                    pollingInterval: this.pollingInterval,
+                    historyInterval: this.historyInterval,
+                    wattGetter:      solarGetter,
+                    uniqueId:        '1_solar_lg'
+                };
+                accessories.push(new PowerMeterLineGraph(this.log, solarLineGraphConfig));
+            }
         }
 
         if (this.additionalServices.grid) {
@@ -224,7 +235,6 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.grid.homekitVisual,
                     evePowerMeter: this.additionalServices.grid.positiveEvePowerMeter,
                     eveHistory:    this.additionalServices.grid.eveHistory,
-                    eveLineGraph:  this.additionalServices.grid.eveLineGraph
                 }
             };
             accessories.push(new PowerMeter(this.log, gridConfig));
@@ -246,10 +256,20 @@ TeslaPowerwall.prototype = {
                         homekitVisual: false,
                         evePowerMeter: true,
                         eveHistory:    this.additionalServices.grid.eveHistory,
-                        eveLineGraph:  false
                     }
                 };
                 accessories.push(new PowerMeter(this.log, negGridConfig));
+            }
+
+            if (this.additionalServices.grid.eveLineGraph) {
+                var gridLineGraphConfig = {
+                    displayName:     'Grid Line Graph',
+                    pollingInterval: this.pollingInterval,
+                    historyInterval: this.historyInterval,
+                    wattGetter:      gridGetter,
+                    uniqueId:        '2_grid_lg'
+                };
+                accessories.push(new PowerMeterLineGraph(this.log, gridLineGraphConfig));
             }
         }
 
@@ -266,7 +286,6 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.battery.homekitVisual,
                     evePowerMeter: this.additionalServices.battery.positiveEvePowerMeter,
                     eveHistory:    this.additionalServices.battery.eveHistory,
-                    eveLineGraph:  this.additionalServices.battery.eveLineGraph
                 }
             };
             accessories.push(new PowerMeter(this.log, batteryConfig));
@@ -288,10 +307,20 @@ TeslaPowerwall.prototype = {
                         homekitVisual: false,
                         evePowerMeter: true,
                         eveHistory:    this.additionalServices.battery.eveHistory,
-                        eveLineGraph:  false
                     }
                 };
                 accessories.push(new PowerMeter(this.log, negBatteryConfig));
+            }
+
+            if (this.additionalServices.battery.eveLineGraph) {
+                var batteryLineGraphConfig = {
+                    displayName:     'Battery Line Graph',
+                    pollingInterval: this.pollingInterval,
+                    historyInterval: this.historyInterval,
+                    wattGetter:      batteryGetter,
+                    uniqueId:        '3_battery_lg'
+                };
+                accessories.push(new PowerMeterLineGraph(this.log, batteryLineGraphConfig));
             }
         }
 
@@ -308,10 +337,20 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.home.homekitVisual,
                     evePowerMeter: this.additionalServices.home.evePowerMeter,
                     eveHistory:    this.additionalServices.home.eveHistory,
-                    eveLineGraph:  this.additionalServices.home.eveLineGraph
                 }
             };
             accessories.push(new PowerMeter(this.log, homeConfig));
+
+            if (this.additionalServices.home.eveLineGraph) {
+                var homeLineGraphConfig = {
+                    displayName:     'Home Line Graph',
+                    pollingInterval: this.pollingInterval,
+                    historyInterval: this.historyInterval,
+                    wattGetter:      homeGetter,
+                    uniqueId:        '4_home_lg'
+                };
+                accessories.push(new PowerMeterLineGraph(this.log, homeLineGraphConfig));
+            }
         }
 
         callback(accessories);
