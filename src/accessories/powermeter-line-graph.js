@@ -51,14 +51,6 @@ PowerMeter.prototype = {
             })
             .on('get', this.getWatt.bind(this));
         eventPolling(this.energyLG, Characteristic.CurrentTemperature, this.pollingInterval);
-        this.energyLG
-            .getCharacteristic(Characteristic.CurrentRelativeHumidity)
-            .setProps({
-                minValue: -10000,
-                maxValue: 10000
-            })
-            .on('get', this.getWatt.bind(this));
-        eventPolling(this.energyLG, Characteristic.CurrentRelativeHumidity, this.pollingInterval);
         services.push(this.energyLG);
 
         this.energyHistory = new FakeGatoHistoryService('weather', this, FakeGatoHistorySetting);
