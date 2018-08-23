@@ -58,8 +58,9 @@ PowerMeter.prototype = {
 
         var history = new Polling(this.wattGetter, this.historyInterval);
         history.pollValue(function(error, value) {
-            this.log.debug('Line Diagramm Energy History value: ' + value);
-            this.energyHistory.addEntry({time:moment().unix(), temp: value});
+            // division by 1000 is necessary because of an overflow at about 500
+            this.log.debug('Line Diagramm Energy History value: ' + (value / 1000));
+            this.energyHistory.addEntry({time:moment().unix(), temp: (value / 1000)});
         }.bind(this));
 
         return services;
