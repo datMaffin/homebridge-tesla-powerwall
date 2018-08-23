@@ -107,9 +107,9 @@ Powerwall.prototype = {
             this.batteryCharge = new Service.WeatherService(
                 this.name + ' ' + 'Battery' + ' History');
             this.batteryCharge
-                .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+                .getCharacteristic(Characteristic.CurrentTemperature)
                 .on('get', this.getBatteryLevel.bind(this));
-            eventPolling(this.batteryCharge, Characteristic.CurrentRelativeHumidity, this.pollingInterval);
+            eventPolling(this.batteryCharge, Characteristic.CurrentTemperature, this.pollingInterval);
             services.push(this.batteryCharge);
 
 
@@ -120,7 +120,7 @@ Powerwall.prototype = {
             percentageHistory.pollValue(function(error, value) {
                 this.log('history');
                 this.batteryChargeHistory.addEntry(
-                    {time: moment().unix(), humidity: value});
+                    {time: moment().unix(), temp: value});
             }.bind(this));
         }
 
