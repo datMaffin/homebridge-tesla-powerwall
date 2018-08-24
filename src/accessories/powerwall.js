@@ -108,6 +108,10 @@ Powerwall.prototype = {
                 this.name + ' ' + 'Battery' + ' History');
             this.batteryCharge
                 .getCharacteristic(Characteristic.CurrentTemperature)
+                .setProps({
+                    minValue: 0,
+                    maxValue: 100
+                })
                 .on('get', this.getBatteryLevel.bind(this));
             eventPolling(this.batteryCharge, Characteristic.CurrentTemperature, this.pollingInterval);
             services.push(this.batteryCharge);
