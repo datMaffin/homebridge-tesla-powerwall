@@ -29,15 +29,10 @@ Mandatory:
 ```json
             "platform": "TeslaPowerwall",
             "name": "Tesla Powerwall",
-            "auth": {
-                "username": "your username",
-                "password": "your password"
-            },
-            "ip": "127.0.0.1",
+            "ip": "111.222.111.222",
 ```
 * "name" can be freely chosen
-* Authentication via "username" and "password" is needed (since powerwall 
-  software version 1.20.0) for running and stopping the powerwall.
+* "ip" needs to be set to the IP-adress of the Tesla Powerwall.
 
 Optional:
 ```json

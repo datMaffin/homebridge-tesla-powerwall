@@ -63,25 +63,10 @@ function TeslaPowerwall(log, config) {
     this.sitemasterUrl = address + '/api/sitemaster';
     this.gridstatusUrl = address + '/api/system_status/grid_status';
 
-    var user = config && config.auth && config.auth.username;
-    var password = config && config.auth && config.auth.password;
-
-    if (user && password) {
-        if (port !== '') {
-            this.stopUrl  = 'http://' + user + ':' + password + '@' + 
-                ip + '/api/sitemaster/stop';
-            this.startUrl = 'http://' + user + ':' + password + '@' + 
-                ip + '/api/sitemaster/run';
-        } else {
-            this.stopUrl  = 'https://' + user + ':' + password + '@' + 
-                ip + ':' + port + '/api/sitemaster/stop';
-            this.startUrl = 'https://' + user + ':' + password + '@' + 
-                ip + ':' + port + '/api/sitemaster/run';
-        }
-    } else {
-        this.stopUrl  = address + '/api/sitemaster/stop';
-        this.startUrl = address + '/api/sitemaster/run';
-    }
+    // starting and stopping only works on tesla powerwalls with 
+    // software version < 1.20
+    this.stopUrl  = address + '/api/sitemaster/stop';
+    this.startUrl = address + '/api/sitemaster/run';
 
     // In milliseconds
     this.pollingInterval = config.pollingInterval || 1000 * 15;
