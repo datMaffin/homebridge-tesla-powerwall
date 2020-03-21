@@ -21,7 +21,7 @@ var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 var inherits = require('util').inherits;
 
 var ValueGetter = require('./src/helper/value-getter.js');
-var Powerwall, PowerMeter, PowerMeterLineGraph;
+var Powerwall, PowerMeter, PowerMeterLineGraph, GridStatus;
 
 module.exports = function(homebridge) {
     Service                = homebridge.hap.Service;
@@ -61,6 +61,7 @@ function TeslaPowerwall(log, config) {
     this.percentageUrl = address + '/api/system_status/soe';
     this.aggregateUrl  = address + '/api/meters/aggregates';
     this.sitemasterUrl = address + '/api/sitemaster';
+    this.gridstatusUrl = address + '/api/system_status/grid_status';
 
     var user = config && config.auth && config.auth.username;
     var password = config && config.auth && config.auth.password;
@@ -145,6 +146,14 @@ function TeslaPowerwall(log, config) {
                 defaultValue(config, ['additionalServices', 'home', 'eveHistory'], true),
             eveLineGraph:
                 defaultValue(config, ['additionalServices', 'home', 'eveLineGraph'], false)
+        },
+        gridstatus: {
+            gridIsDownSwitch:
+                defaultValue(config, ['additionalServices', 'gridstatus', 'gridIsDownSwitch'], false),
+            gridIsUpSwitch:
+                defaultValue(config, ['additionalServices', 'gridstatus', 'gridIsUpSwitch'], false),
+            gridIsNotYetInSyncSwitch:
+                defaultValue(config, ['additionalServices', 'gridstatus', 'gridIsNotYetInSyncSwitch'], false),
         }
     };
 
@@ -156,6 +165,9 @@ function TeslaPowerwall(log, config) {
 
     PowerMeterLineGraph = require('./src/accessories/powermeter-line-graph.js')(
         Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting);
+
+    GridStatus = require('./src/accessories/gridstatus.js')(Characteristic, 
+        Service, FakeGatoHistoryService, FakeGatoHistorySetting);
 
     loadEve();
 }
@@ -351,6 +363,23 @@ TeslaPowerwall.prototype = {
                 };
                 accessories.push(new PowerMeterLineGraph(this.log, homeLineGraphConfig));
             }
+        }
+
+        if (this.additionalServices.gridstatus.gridIsUpSwitch ||
+            this.additionalServices.gridstatus.gridIsDownSwitch ||
+            this.additionalServices.gridstatus.gridIsNotYetInSyncSwitch) {
+
+            var gridStatusGetter = new ValueGetter(
+                this.log, this.gridstatusUrl, ['grid_status'], '');
+            var gridStatusConfig = {
+                displayName:        'Grid Status',
+                pollingInterval:    this.pollingInterval,
+                historyInterval:    this.historyInterval,
+                gridStatusGetter:   gridStatusGetter,
+                uniqueId:           '5_grid_status',
+                additionalServices: this.additionalServices.gridstatus
+            }
+            accessories.push(new GridStatus(this.log, gridStatusConfig));
         }
 
         callback(accessories);
