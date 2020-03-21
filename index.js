@@ -102,6 +102,8 @@ function TeslaPowerwall(log, config) {
                 defaultValue(config, ['additionalServices', 'powerwall', 'homekitVisual'], true),
             eveHistory: 
                 defaultValue(config, ['additionalServices', 'powerwall', 'eveHistory'], true),
+            batteryIsLowSwitch: 
+                defaultValue(config, ['additionalServices', 'powerwall', 'batteryIsLowSwitch'], false),
         },
         solar: {
             homekitVisual:

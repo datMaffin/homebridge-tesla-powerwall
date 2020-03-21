@@ -48,7 +48,8 @@ Optional:
             "additionalServices": {
                 "powerwall": {
                     "homekitVisual": true,
-                    "eveHistory": true
+                    "eveHistory": true,
+                    "batteryIsLowSwitch": false
                 },
                 "solar": {
                     "homekitVisual": true,

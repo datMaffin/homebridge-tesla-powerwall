@@ -56,7 +56,7 @@ Powerwall.prototype = {
             .setCharacteristic(Characteristic.SerialNumber, this.uniqueId);
         services.push(info);
         
-        this.stateSwitch = new Service.Switch(this.name);
+        this.stateSwitch = new Service.Switch(this.name, "1");
         this.stateSwitch
             .getCharacteristic(Characteristic.On)
             .on('get', this.getStateSwitch.bind(this))
@@ -132,6 +132,16 @@ Powerwall.prototype = {
             }.bind(this));
         }
 
+        if (this.additionalServices.batteryIsLowSwitch) {
+            this.batteryIsLowSwitch = new Service.Switch(this.name + ' State: "Battery Is Low"', '2');
+            this.batteryIsLowSwitch
+                .getCharacteristic(Characteristic.On)
+                .on('get', this.getLowBattery.bind(this))
+                .on('set', this.setBatteryIsLowSwitch.bind(this));
+            eventPolling(this.batteryIsLowSwitch, Characteristic.On, this.pollingInterval);
+            services.push(this.batteryIsLowSwitch);
+        }
+
         return services;
     },
 
@@ -154,6 +164,10 @@ Powerwall.prototype = {
         }.bind(this));
 
         reset(this.stateSwitch, Characteristic.On, 1000 * 4);
+    },
+
+    setBatteryIsLowSwitch: function(state, callback) {
+        reset(this.batteryIsLowSwitch, Characteristic.On);
     },
 
     getBatteryLevel: function(callback) {
