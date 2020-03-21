@@ -49,7 +49,8 @@ Optional:
                 "powerwall": {
                     "homekitVisual": true,
                     "eveHistory": true,
-                    "batteryIsLowSwitch": false
+                    "batteryIsLowSwitch": false,
+                    "batteryIsChargingSwitch": false
                 },
                 "solar": {
                     "homekitVisual": true,

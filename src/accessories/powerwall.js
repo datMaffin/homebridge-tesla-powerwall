@@ -142,6 +142,16 @@ Powerwall.prototype = {
             services.push(this.batteryIsLowSwitch);
         }
 
+        if (this.additionalServices.batteryIsChargingSwitch) {
+            this.batteryIsChargingSwitch = new Service.Switch(this.name + ' State: "Battery Is Charging"', '3');
+            this.batteryIsChargingSwitch
+                .getCharacteristic(Characteristic.On)
+                .on('get', this.getChargingState.bind(this))
+                .on('set', this.setBatteryIsChargingSwitch.bind(this));
+            eventPolling(this.batteryIsChargingSwitch, Characteristic.On, this.pollingInterval);
+            services.push(this.batteryIsChargingSwitch);
+        }
+
         return services;
     },
 
@@ -168,6 +178,10 @@ Powerwall.prototype = {
 
     setBatteryIsLowSwitch: function(state, callback) {
         reset(this.batteryIsLowSwitch, Characteristic.On);
+    },
+
+    setBatteryIsChargingSwitch: function(state, callback) {
+        reset(this.batteryIsChargingSwitch, Characteristic.On);
     },
 
     getBatteryLevel: function(callback) {
