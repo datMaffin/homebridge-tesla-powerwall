@@ -33,6 +33,7 @@ Mandatory:
                 "username": "your username",
                 "password": "your password"
             },
+            "ip": "127.0.0.1",
 ```
 * "name" can be freely chosen
 * Authentication via "username" and "password" is needed (since powerwall 
@@ -40,7 +41,6 @@ Mandatory:
 
 Optional:
 ```json
-            "ip": "127.0.0.1",
             "port": "",
             "pollingInterval": 15000,
             "historyInterval": 300000,
