@@ -75,6 +75,11 @@ Optional:
                     "evePowerMeter": true,
                     "eveHistory": true,
                     "eveLineGraph": false
+                },
+                "gridstatus": {
+                    "gridIsDownSwitch": false,
+                    "gridIsUpSwitch": false,
+                    "gridIsNotYetInSyncSwitch": false
                 }
             }
 ```
