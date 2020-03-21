@@ -98,6 +98,10 @@ Powerwall.prototype = {
                 .on('get', this.getBatteryLevel.bind(this))
                 .on('set', this.setBrightnessBatteryVisualizer.bind(this));
             eventPolling(this.batteryVisualizer, Characteristic.Brightness, this.pollingInterval);
+            this.batteryVisualizer // Set saturation to fix compatibility with Homebridge Alexa
+                .getCharacteristic(Characteristic.Saturation)
+                .on('get', this.getConstantSaturationBatteryVisualizer.bind(this))
+                .on('set', this.setSaturationBatteryVisualizer.bind(this));
             services.push(this.batteryVisualizer);
         }
 
@@ -178,10 +182,15 @@ Powerwall.prototype = {
         callback();
         reset( this.batteryVisualizer, Characteristic.On);
     },
+
     getHueBatteryVisualizer: function(callback) {
         this.percentageGetter.requestValue(function(error, value) {
             callback(error, (value/100) * 120 );
         }.bind(this));
+    },
+
+    getConstantSaturationBatteryVisualizer: function(callback) {
+        callback(false, 100);
     },
 
     setHueBatteryVisualizer: function(state, callback) {
@@ -192,5 +201,10 @@ Powerwall.prototype = {
     setBrightnessBatteryVisualizer: function(state, callback) {
         callback();
         reset(this.batteryVisualizer, Characteristic.Brightness);
+    },
+
+    setSaturationBatteryVisualizer: function(state, callback) {
+        callback();
+        reset(this.batteryVisualizer, Characteristic.Saturation);
     }
 };
