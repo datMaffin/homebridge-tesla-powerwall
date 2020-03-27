@@ -97,9 +97,7 @@ Optional:
       current power times 100; 100% is equal to 10 000W.
     + `*.evePowerMeter`: Adds an Eve powermeter service.
     + `*.evehistory`: Adds the total consumption to an Eve powermeter service.
-      It only works when `evePowerMeter` is also set to true.
-    + `*.eveLineGraph`: Adds the total consumption to an Eve powermeter 
-      service. It only works when `evePowerMeter` is also set to true.
+      Only works when `evePowerMeter` is also set to true.
     + `*.eveLineGraph`: Saves power data in an Eve weather diagramm to get a 
       nice line chart. 
 
