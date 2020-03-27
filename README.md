@@ -6,7 +6,10 @@
 
 Communication with the Tesla Powerwall is according to https://github.com/vloschiavo/powerwall2 .
 
-This Plugin is still under development. If you like it, please support the development by sending a "cup of coffee" via Paypal:
+This Plugin is considered to be complete.
+If you encounter a bug or want to propose a new feature feel free to open an issue!
+
+If you like this plugin it is possible to donate a "cup of coffee" via Paypal:
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/HomebridgePowerwall)
 
@@ -91,10 +94,11 @@ Optional:
     implementing Homekit automations.)
   - `powerwall.homekitVisual`: Adds a lamp service representing the battery 
     level.
-  - `powerwall.eveHistory`: Abuses an Eve weather service; sets the temperature
+  - `powerwall.eveHistory`: Adds an Eve weather service; sets the temperature
+    to the battery level in percent.
   - *Powermeter* i.e. `solar`, `grid`, `battery`, `home`
     + `*.homekitVisual`: Adds a fan service; sets the speed to the 
-      current power times 100; 100% is equal to 10 000W.
+      current power times 100; 100% is equal to 10000W.
     + `*.evePowerMeter`: Adds an Eve powermeter service.
     + `*.evehistory`: Adds the total consumption to an Eve powermeter service.
       Only works when `evePowerMeter` is also set to true.
