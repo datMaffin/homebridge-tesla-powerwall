@@ -6,14 +6,6 @@
 //
 // A homebridge plugin
 //
-//
-// TODO:
-// - pictures for github
-// - moooar line-diagramms!
-// - fix total consumption
-// - fix stop/run (authentication problem)
-// - round all values to better test
-//
 
 'use strict';
 
