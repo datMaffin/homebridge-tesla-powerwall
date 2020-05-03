@@ -100,7 +100,7 @@ function TeslaPowerwall(log, config) {
             positiveEvePowerMeter:
                 defaultValue(config, ['additionalServices', 'grid', 'positiveEvePowerMeter'], true),
             negativeEvePowerMeter:
-                defaultValue(config, ['additionalServices', 'grid', 'negativeRvePowerMeter'], true),
+                defaultValue(config, ['additionalServices', 'grid', 'negativeEvePowerMeter'], true),
             eveHistory:
                 defaultValue(config, ['additionalServices', 'grid', 'eveHistory'], true),
             eveLineGraph:
@@ -112,7 +112,7 @@ function TeslaPowerwall(log, config) {
             positiveEvePowerMeter:
                 defaultValue(config, ['additionalServices', 'battery', 'positiveEvePowerMeter'], true),
             negativeEvePowerMeter:
-                defaultValue(config, ['additionalServices', 'battery', 'negativeRvePowerMeter'], true),
+                defaultValue(config, ['additionalServices', 'battery', 'negativeEvePowerMeter'], true),
             eveHistory:
                 defaultValue(config, ['additionalServices', 'battery', 'eveHistory'], true),
             eveLineGraph:
@@ -163,6 +163,7 @@ TeslaPowerwall.prototype = {
     accessories: function(callback) {
         var accessories = [];
 
+
         // Powerwall:
         var percentageGetter = new ValueGetter(
             this.log, this.percentageUrl, ['percentage'], 0);
@@ -185,8 +186,15 @@ TeslaPowerwall.prototype = {
         };
         accessories.push(new Powerwall(this.log, powerwallConfig));
 
-        if (this.additionalServices.solar) {
 
+        if (this.additionalServices.solar && 
+            (
+                this.additionalServices.solar.homekitVisual ||
+                this.additionalServices.solar.evePowerMeter ||
+                this.additionalServices.solar.eveHistory ||
+                this.additionalServices.solar.eveLineGraph
+            )
+        ) {
             var solarGetter = new ValueGetter(
                 this.log, this.aggregateUrl, ['solar', 'instant_power'], 0);
             var solarConfig = {
@@ -215,7 +223,15 @@ TeslaPowerwall.prototype = {
             }
         }
 
-        if (this.additionalServices.grid) {
+        if (this.additionalServices.grid && 
+            (
+                this.additionalServices.grid.homekitVisual ||
+                this.additionalServices.grid.positiveEvePowerMeter ||
+                this.additionalServices.grid.negativeEvePowerMeter ||
+                this.additionalServices.grid.eveHistory ||
+                this.additionalServices.grid.eveLineGraph
+            )
+        ) {
             var gridGetter = new ValueGetter(
                 this.log, this.aggregateUrl, ['site', 'instant_power'], 0);
             var gridConfig = {
@@ -266,7 +282,15 @@ TeslaPowerwall.prototype = {
             }
         }
 
-        if (this.additionalServices.battery) {
+        if (this.additionalServices.battery && 
+            (
+                this.additionalServices.battery.homekitVisual ||
+                this.additionalServices.battery.positiveEvePowerMeter ||
+                this.additionalServices.battery.negativeEvePowerMeter ||
+                this.additionalServices.battery.eveHistory ||
+                this.additionalServices.battery.eveLineGraph
+            )
+        ) {
             var batteryGetter = new ValueGetter(
                 this.log, this.aggregateUrl, ['battery', 'instant_power'], 0);
             var batteryConfig = {
@@ -317,7 +341,14 @@ TeslaPowerwall.prototype = {
             }
         }
 
-        if (this.additionalServices.home) {
+        if (this.additionalServices.home && 
+            (
+                this.additionalServices.home.homekitVisual ||
+                this.additionalServices.home.evePowerMeter ||
+                this.additionalServices.home.eveHistory ||
+                this.additionalServices.home.eveLineGraph
+            )
+        ) {
             var homeGetter = new ValueGetter(
                 this.log, this.aggregateUrl, ['load', 'instant_power'], 0);
             var homeConfig = {
