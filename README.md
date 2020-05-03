@@ -87,7 +87,7 @@ Optional:
   is not explicitly listed)
 
 * `pollingInterval` or `historyInterval` in milliseconds
-* `lowBattery`: Percentage from which the charge is considered critical/low
+* `lowBattery`: Percentage when the charge is considered critical/low
 * `additionalServices`: Services additional to the basic switch with the 
   battery status.
   - *`...Switch`*: Adds a switch that represents the current state. (Useful for
@@ -297,13 +297,13 @@ the `port` option is either removed or set to `""`.
 
 ### Why was the authentication with username and password removed?
 The authentication never worked. I did not find good documentation for 
-authentication. In addition username and password are not necessery for reading
-the status from the powerwall. The only feature that would require 
+authentication. In addition username and password are not necessary for reading
+the status from the Powerwall. The only feature that would require 
 authentication (since Powerwall version 1.20.0) is the stopping and running 
-(starting) of the powerwall.
+(starting) of the Powerwall.
 
 If you use a Powerwall with Software version less than 1.20.0 you can stop and 
-start die Powerwall by toggling the switch indicating the Powerwall on/off 
+start the Powerwall by toggling the switch that is indicating the Powerwall on/off 
 state.
 
 # Feature request / Bug found?
