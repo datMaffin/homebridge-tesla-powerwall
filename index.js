@@ -135,6 +135,10 @@ function TeslaPowerwall(log, config) {
                 defaultValue(config, ['additionalServices', 'gridstatus', 'gridIsUpSwitch'], false),
             gridIsNotYetInSyncSwitch:
                 defaultValue(config, ['additionalServices', 'gridstatus', 'gridIsNotYetInSyncSwitch'], false),
+            gridIsDownSensor:
+                defaultValue(config, ['additionalServices', 'gridstatus', 'gridIsDownSensor'], false),
+            gridIsUpSensor:
+                defaultValue(config, ['additionalServices', 'gridstatus', 'gridIsUpSensor'], false),
         }
     };
 
