@@ -1,6 +1,6 @@
 {
   "name": "homebridge-tesla-powerwall",
-  "version": "1.0.1",
+  "version": "1.1.0Beta",
   "description": "Homebridge plugin for the Tesla Powerwall",
   "main": "index.js",
   "scripts": {
