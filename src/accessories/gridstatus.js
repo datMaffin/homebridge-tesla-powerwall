@@ -82,20 +82,18 @@ Gridstatus.prototype = {
         if (this.additionalServices.gridIsUpSensor) {
             this.gridIsUpSensor = new Service.ContactSensor(this.name + ' "Up Sensor"', '4');
             this.gridIsUpSensor
-                .getCharacteristic(Characteristic.On)
+                .getCharacteristic(Characteristic.ContactSensorState)
                 .on('get', this.getGridIsUpSwitch.bind(this))
-            // TODO: Test if polling is necessary
-            //eventPolling(this.gridIsUpSensor, Characteristic.On, this.pollingInterval);
+            eventPolling(this.gridIsUpSensor, Characteristic.ContactSensorState, this.pollingInterval);
             services.push(this.gridIsUpSensor);
         }
 
         if (this.additionalServices.gridIsDownSensor) {
             this.gridIsDownSensor = new Service.ContactSensor(this.name + ' "Down Sensor"', '5');
             this.gridIsDownSensor
-                .getCharacteristic(Characteristic.On)
+                .getCharacteristic(Characteristic.ContactSensorState)
                 .on('get', this.getGridIsDownSwitch.bind(this))
-            // TODO: Test if polling is necessary
-            //eventPolling(this.gridIsDownSensor, Characteristic.On, this.pollingInterval);
+            eventPolling(this.gridIsDownSensor, Characteristic.ContactSensorState, this.pollingInterval);
             services.push(this.gridIsDownSensor);
         }
 
