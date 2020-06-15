@@ -383,7 +383,9 @@ TeslaPowerwall.prototype = {
 
         if (this.additionalServices.gridstatus.gridIsUpSwitch ||
             this.additionalServices.gridstatus.gridIsDownSwitch ||
-            this.additionalServices.gridstatus.gridIsNotYetInSyncSwitch) {
+            this.additionalServices.gridstatus.gridIsNotYetInSyncSwitch ||
+            this.additionalServices.gridstatus.gridIsUpSensor ||
+            this.additionalServices.gridstatus.gridIsDownSensor) {
 
             var gridStatusGetter = new ValueGetter(
                 this.log, this.gridstatusUrl, ['grid_status'], '');
