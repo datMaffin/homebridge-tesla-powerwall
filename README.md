@@ -79,7 +79,9 @@ Optional:
                 "gridstatus": {
                     "gridIsDownSwitch": false,
                     "gridIsUpSwitch": false,
-                    "gridIsNotYetInSyncSwitch": false
+                    "gridIsNotYetInSyncSwitch": false,
+                    "gridIsDownSensor": false,
+                    "gridIsUpSensor": false
                 }
             }
 ```
@@ -91,6 +93,8 @@ Optional:
 * `additionalServices`: Services additional to the basic switch with the 
   battery status.
   - *`...Switch`*: Adds a switch that represents the current state. (Useful for
+    implementing Homekit automations.)
+  - *`...Sensor`*: Adds a sensor that represents the current state. (Useful for 
     implementing Homekit automations.)
   - `powerwall.homekitVisual`: Adds a lamp service representing the battery 
     level.
@@ -302,7 +306,7 @@ the status from the Powerwall. The only feature that would require
 authentication (since Powerwall version 1.20.0) is the stopping and running 
 (starting) of the Powerwall.
 
-If you use a Powerwall with Software version less than 1.20.0 you can stop and 
+If you use a Powerwall with software version less than 1.20.0 you can stop and 
 start the Powerwall by toggling the switch that is indicating the Powerwall on/off 
 state.
 
