@@ -152,8 +152,9 @@ function TeslaPowerwall(log, config) {
         }
     };
 
-    // Start login loop. My http request will save the cookies. 
-    // Request login every 23h to prevent the expireing of the cookie.
+    // Start login loop to get an authentication cookie. 
+    //
+    // My http requests will automatically use received cookies. 
     var login = function() {
         request(
             {
@@ -177,6 +178,8 @@ function TeslaPowerwall(log, config) {
             }.bind(this));
     }.bind(this);
 
+    // Request the login every 23h to prevent the expiring of the 
+    // authentication cookie.
     login();
     setInterval(login, loginInterval);
     
