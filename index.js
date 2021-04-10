@@ -13,6 +13,7 @@ var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 var inherits = require('util').inherits;
 
 var ValueGetter = require('./src/helper/value-getter.js');
+var request  = require('request');
 var Powerwall, PowerMeter, PowerMeterLineGraph, GridStatus;
 
 module.exports = function(homebridge) {
@@ -49,11 +50,20 @@ function TeslaPowerwall(log, config) {
         address = 'http://' + ip;
     }
 
+    var password = config.password || '';
+    var loginInterval = config.loginInterval || (1000 * 60 * 60 * 23);
+
+    // username and email seem to (currently) not be relevant for the login.
+    // The defaults are currently the same as the powerwall2 documentation.
+    var username = config.username || 'customer'
+    var email = config.email || 'Lt.Dan@bubbagump.com'
+
 
     this.percentageUrl = address + '/api/system_status/soe';
     this.aggregateUrl  = address + '/api/meters/aggregates';
     this.sitemasterUrl = address + '/api/sitemaster';
     this.gridstatusUrl = address + '/api/system_status/grid_status';
+    this.loginUrl = address + '/api/login/Basic';
 
     // starting and stopping only works on tesla powerwalls with 
     // software version < 1.20
@@ -141,6 +151,35 @@ function TeslaPowerwall(log, config) {
                 defaultValue(config, ['additionalServices', 'gridstatus', 'gridIsUpSensor'], false),
         }
     };
+
+    // Start login loop. My http request will save the cookies. 
+    // Request login every 23h to prevent the expireing of the cookie.
+    var login = function() {
+        request(
+            {
+                url: this.loginUrl,
+                method: 'POST',
+                agentOptions: {rejectUnauthorized: false},
+                jar: true,
+                json: true,
+                body: {
+                    username: username,
+                    password: password,
+                    email: email
+                }
+            }, 
+            function(error, response, body){
+                if (!error && response.statusCode === 200) {
+                    this.log("Login successful");
+                } else {
+                    this.log("!! Login Failed !!");
+                }
+            }.bind(this));
+    }.bind(this);
+
+    login();
+    setInterval(login, loginInterval);
+    
 
     Powerwall = require('./src/accessories/powerwall.js')(Characteristic, 
         Service, FakeGatoHistoryService, FakeGatoHistorySetting);

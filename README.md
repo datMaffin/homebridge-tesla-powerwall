@@ -33,6 +33,7 @@ Mandatory:
             "platform": "TeslaPowerwall",
             "name": "Tesla Powerwall",
             "ip": "111.222.111.222",
+            "password": "abc123",
 ```
 * `name` can be freely chosen
 * `ip` needs to be set to the IP-adress of the Tesla Powerwall.
@@ -40,6 +41,9 @@ Mandatory:
 Optional:
 ```json
             "port": "",
+            "username": "customer",
+            "email": "Lt.Dan@bubbagump.com",
+            "loginInterval": 82800000,
             "pollingInterval": 15000,
             "historyInterval": 300000,
             "lowBattery": 20,
@@ -88,7 +92,7 @@ Optional:
 * *Here* filled with default values (values that are used when the attribute 
   is not explicitly listed)
 
-* `pollingInterval` or `historyInterval` in milliseconds
+* `loginInterval`, `pollingInterval` or `historyInterval` in milliseconds
 * `lowBattery`: Percentage when the charge is considered critical/low
 * `additionalServices`: Services additional to the basic switch with the 
   battery status.
@@ -182,6 +186,7 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
             "platform": "TeslaPowerwall",
             "name": "Tesla Powerwall",
             "ip": "192.168.178.100",
+            "password": "abc123",
             "pollingInterval": 10000,
             "historyInterval": 120000,
             "lowBattery": 10,
@@ -200,6 +205,7 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
             "platform": "TeslaPowerwall",
             "name": "Tesla Powerwall",
             "ip": "192.168.178.100",
+            "password": "abc123",
             "additionalServices": {
                 "powerwall": {
                     "homekitVisual": false
@@ -228,6 +234,7 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
             "platform": "TeslaPowerwall",
             "name": "Tesla Powerwall",
             "ip": "192.168.178.100",
+            "password": "abc123",
             "additionalServices": {
                 "powerwall": {
                     "homekitVisual": false,
@@ -267,6 +274,7 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
             "platform": "TeslaPowerwall",
             "name": "Tesla Powerwall",
             "ip": "192.168.178.100",
+            "password": "abc123",
             "additionalServices": {
                 "powerwall": {
                     "eveHistory": false

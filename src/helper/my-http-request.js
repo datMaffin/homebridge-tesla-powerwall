@@ -11,7 +11,8 @@ module.exports = function(url, callback) {
         {
             url: url,
             method: 'GET',
-            agentOptions: {rejectUnauthorized: false}
+            agentOptions: {rejectUnauthorized: false},
+            jar: true
         },
         function(error, response, body) {
             callback(error, response, body);
