@@ -7,7 +7,7 @@
  * @param {string} body Body returned by request.
  */
 module.exports = function(log, error, response, body) {
-    if (error || response >= 300) {
+    if (error || (response && response.statusCode >= 300)) {
         log('error: ', error);
         log('status code: ', response && response.statusCode);
         log('body: ', body);
