@@ -14,6 +14,7 @@ var inherits = require('util').inherits;
 
 var ValueGetter = require('./src/helper/value-getter.js');
 var request  = require('request');
+var _checkRequestError = require('./src/helper/check-for-request-error.js');
 var Powerwall, PowerMeter, PowerMeterLineGraph, GridStatus;
 
 module.exports = function(homebridge) {
@@ -45,9 +46,9 @@ function TeslaPowerwall(log, config) {
     var port    = config.port || '';
     var address;
     if (port !== '') {
-        address = 'http://' + ip + ':' + port;
+        address = 'https://' + ip + ':' + port;
     } else {
-        address = 'http://' + ip;
+        address = 'https://' + ip;
     }
 
     var password = config.password || '';
@@ -170,10 +171,10 @@ function TeslaPowerwall(log, config) {
                 }
             }, 
             function(error, response, body){
-                if (!error && response.statusCode === 200) {
-                    this.log("Login successful");
-                } else {
+                if (_checkRequestError(this.log, error, response, body)) {
                     this.log("!! Login Failed !!");
+                } else {
+                    this.log("Login successful");
                 }
             }.bind(this));
     }.bind(this);
