@@ -119,7 +119,9 @@ PowerMeter.prototype = {
 
     getWatt: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
-            callback(error, value);
+            // Do not allow negative numbers; 
+            // negative values are illegal for the characteristic "Consumption"
+            callback(error, Math.max(value, 0));
         });
     },
 
