@@ -44,7 +44,7 @@ Optional:
             "port": "",
             "username": "customer",
             "email": "Lt.Dan@bubbagump.com",
-            "loginInterval": 82800000,
+            "loginInterval": 39600000,
             "pollingInterval": 15000,
             "historyInterval": 300000,
             "lowBattery": 20,
@@ -104,6 +104,7 @@ Optional:
   After a successful login, the authentication token is currently valid for 
   24h. If your internet is unreliable, it may be helpful to set a lower 
   interval to guarantee at least one successful login in the 24h time span.
+  The default of 39600000ms corresponds to 11h.
 * `lowBattery`: Percentage when the charge is considered critical/low
 * `additionalServices`: Services additional to the basic switch with the 
   battery status.

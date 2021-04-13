@@ -52,7 +52,7 @@ function TeslaPowerwall(log, config) {
     }
 
     var password = config.password || '';
-    var loginInterval = config.loginInterval || (1000 * 60 * 60 * 23);
+    var loginInterval = config.loginInterval || (1000 * 60 * 60 * 11);
 
     // username and email seem to (currently) not be relevant for the login.
     // The defaults are currently the same as the powerwall2 documentation.
