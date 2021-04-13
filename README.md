@@ -7,9 +7,9 @@
 Communication with the Tesla Powerwall is according to https://github.com/vloschiavo/powerwall2 .
 
 This Plugin is considered to be complete.
-If you encounter a bug or want to propose a new feature feel free to open an issue!
+If you encounter a bug or want to propose a new feature, feel free to open an issue!
 
-If you like this plugin it is possible to donate a "cup of coffee" via Paypal:
+If you like this plugin, it is possible to donate a "cup of coffee" via Paypal:
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/HomebridgePowerwall)
 
@@ -36,7 +36,8 @@ Mandatory:
             "password": "abc123",
 ```
 * `name` can be freely chosen
-* `ip` needs to be set to the IP-adress of the Tesla Powerwall.
+* `ip` needs to be set to the IP-address of the Tesla Powerwall.
+* `password` a correct password must be set
 
 Optional:
 ```json
@@ -92,7 +93,17 @@ Optional:
 * *Here* filled with default values (values that are used when the attribute 
   is not explicitly listed)
 
+* `username`: the default ("customer") is currently the only username that will 
+  work when logging in, i.e., there is no need to change any username; 
+  using "customer" here will *just work*.
+* `email`: seems to currently be ignored, i.e., it does not matter what email 
+  is used for the login.
+
 * `loginInterval`, `pollingInterval` or `historyInterval` in milliseconds
+* `loginInterval`: the login is executed periodically based on this interval. 
+  After a successful login, the authentication token is currently valid for 
+  24h. If your internet is unreliable, it may be helpful to set a lower 
+  interval to guarantee at least one successful login in the 24h time span.
 * `lowBattery`: Percentage when the charge is considered critical/low
 * `additionalServices`: Services additional to the basic switch with the 
   battery status.
@@ -110,7 +121,7 @@ Optional:
     + `*.evePowerMeter`: Adds an Eve powermeter service.
     + `*.evehistory`: Adds the total consumption to an Eve powermeter service.
       Only works when `evePowerMeter` is also set to true.
-    + `*.eveLineGraph`: Saves power data in an Eve weather diagramm to get a 
+    + `*.eveLineGraph`: Saves power data in an Eve weather diagram to get a 
       nice line chart. 
 
 ```json
@@ -303,20 +314,16 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
 ```
 
 # FAQ
-### Plugin stopped working after Powerwall upgraded to version 1.20.0
-(Possible) **Solution**: Update this plugin and check in the `config.json` that 
-the `port` option is either removed or set to `""`.
+### Plugin stopped working after the Powerwall upgraded to version 20.49.0
+Upgrade to the latest update of this plugin and make sure the `password` field
+is added (see documentation above).
 
-### Why was the authentication with username and password removed?
-The authentication never worked. I did not find good documentation for 
-authentication. In addition username and password are not necessary for reading
-the status from the Powerwall. The only feature that would require 
-authentication (since Powerwall version 1.20.0) is the stopping and running 
-(starting) of the Powerwall.
+The `username` field should, at the moment, have a value equal to the default, i.e., it must be 
+equal to "customer".
 
-If you use a Powerwall with software version less than 1.20.0 you can stop and 
-start the Powerwall by toggling the switch that is indicating the Powerwall on/off 
-state.
+### Plugin behaves not as it should and the Powerwall version is lower than 20.49.0
+Try to use the last 1.x.y version "1.1.0", i.e., `sudo npm install -g homebridge-tesla-powerwall@1.1.0`.
+
 
 # Feature request / Bug found?
 You are welcome to create an [Issue](https://github.com/datMaffin/homebridge-tesla-powerwall/issues/new).
