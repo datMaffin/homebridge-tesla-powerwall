@@ -53,7 +53,8 @@ Optional:
                     "homekitVisual": true,
                     "eveHistory": true,
                     "batteryIsLowSwitch": false,
-                    "batteryIsChargingSwitch": false
+                    "batteryIsChargingSwitch": false,
+                    "makeOnOffSwitchReadOnly": true
                 },
                 "solar": {
                     "homekitVisual": true,
@@ -116,6 +117,10 @@ Optional:
     level.
   - `powerwall.eveHistory`: Adds an Eve weather service; sets the temperature
     to the battery level in percent.
+  - *`powerwall.makeOnOffSwitchReadOnly`*: While the powerwall switch will 
+    still be able to be flipped within, for example, the Home.app, when this 
+    field is true, it will not have any effect.
+    The switch is always going to update its state based on the received state. 
   - *Powermeter* i.e. `solar`, `grid`, `battery`, `home`
     + `*.homekitVisual`: Adds a fan service; sets the speed to the 
       current power times 100; 100% is equal to 10000W.

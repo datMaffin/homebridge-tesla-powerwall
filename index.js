@@ -64,7 +64,7 @@ function TeslaPowerwall(log, config) {
     this.aggregateUrl  = address + '/api/meters/aggregates';
     this.sitemasterUrl = address + '/api/sitemaster';
     this.gridstatusUrl = address + '/api/system_status/grid_status';
-    this.loginUrl = address + '/api/login/Basic';
+    this.loginUrl      = address + '/api/login/Basic';
 
     // starting and stopping only works on tesla powerwalls with 
     // software version < 1.20
@@ -94,6 +94,8 @@ function TeslaPowerwall(log, config) {
                 defaultValue(config, ['additionalServices', 'powerwall', 'batteryIsLowSwitch'], false),
             batteryIsChargingSwitch: 
                 defaultValue(config, ['additionalServices', 'powerwall', 'batteryIsChargingSwitch'], false),
+            makeOnOffSwitchReadOnly:
+                defaultValue(config, ['additionalServices', 'powerwall', 'makeOnOffSwitchReadOnly'], true),
         },
         solar: {
             homekitVisual:

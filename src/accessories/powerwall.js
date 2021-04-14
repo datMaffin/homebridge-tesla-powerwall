@@ -160,18 +160,22 @@ Powerwall.prototype = {
     },
 
     setStateSwitch: function(state, callback) {
-        var url;
 
-        if (state) {
-            url = this.startUrl;
-        } else {
-            url = this.stopUrl;
+        if (this.additionalServices.makeOnOffSwitchReadOnly === false) {
+
+            var url;
+
+            if (state) {
+                url = this.startUrl;
+            } else {
+                url = this.stopUrl;
+            }
+
+            _httpGetRequest(url, function(error, response, body) {
+                _checkRequestError(this.log, error, response, body);
+                callback(error);
+            }.bind(this));
         }
-
-        _httpGetRequest(url, function(error, response, body) {
-            _checkRequestError(this.log, error, response, body);
-            callback(error);
-        }.bind(this));
 
         reset(this.stateSwitch, Characteristic.On, 1000 * 4);
     },
