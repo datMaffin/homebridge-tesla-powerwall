@@ -213,7 +213,11 @@ TeslaPowerwall.prototype = {
 
         // Powerwall:
         var percentageGetter = new ValueGetter(
-            this.log, this.percentageUrl, ['percentage'], 0);
+            this.log, 
+            this.percentageUrl, 
+            ['percentage'], 
+            0, 
+            function(value) {return Math.min(value, 100);});
         var onStatusGetter = new ValueGetter(
             this.log, this.sitemasterUrl, ['running'], false);
         var chargingGetter = new ValueGetter(
