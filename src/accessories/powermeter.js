@@ -148,7 +148,7 @@ PowerMeter.prototype = {
     },
 
     setResetTotalConsumption: function(state, callback) {
-        this.powerMeterHistory.setExtraPersistedData({ totalEnergy: 0, lastReset: state});
+        this.powerMeterHistory.setExtraPersistedData({ totalEnergy: 0, lastReset: state || 0});
         this.powerConsumption
             .getCharacteristic(Characteristic.TotalConsumption)
             .updateValue(0);
