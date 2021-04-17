@@ -96,9 +96,9 @@ Optional:
 
 * `username`: the default ("customer") is currently the only username that will 
   work when logging in, i.e., there is no need to change any username; 
-  using "customer" here will *just work*.
-* `email`: seems to currently be ignored, i.e., it does not matter what email 
-  is used for the login.
+  using "customer" here, will *just work*.
+* `email`: is part of the login data. However, it currently seems to be ignored, 
+  i.e., it does not matter what email is entered.
 
 * `loginInterval`, `pollingInterval` or `historyInterval` in milliseconds
 * `loginInterval`: the login is executed periodically based on this interval. 
@@ -320,6 +320,15 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
 ```
 
 # FAQ
+### I Get a Login Error
+If you get a login error similar to:
+```
+[4/16/2021, 6:56:52 PM] [Powerwall] error: null
+[4/16/2021, 6:56:52 PM] [Powerwall] status code: 403
+[4/16/2021, 6:56:52 PM] [Powerwall] body: {"code":403,"error":"Unable to GET to resource","message":"User does not have adequate access rights"}
+```
+Ensure that the password is correct. Regarding the username, currently only "customer" (the default) will be accepted by the powerwall.
+
 ### Plugin stopped working after the Powerwall upgraded to version 20.49.0
 Upgrade to the latest update of this plugin and make sure the `password` field
 is added (see documentation above).
