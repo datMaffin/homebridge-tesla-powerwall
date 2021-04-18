@@ -327,7 +327,8 @@ If you get a login error similar to:
 [4/16/2021, 6:56:52 PM] [Powerwall] status code: 403
 [4/16/2021, 6:56:52 PM] [Powerwall] body: {"code":403,"error":"Unable to GET to resource","message":"User does not have adequate access rights"}
 ```
-Ensure that the password is correct. Regarding the username, currently only "customer" (the default) will be accepted by the powerwall.
+* Ensure that the password is correct. Regarding the username, currently only "customer" (the default) will be accepted by the powerwall.
+* The powerwall might require a re-registration and password update.
 
 ### Plugin stopped working after the Powerwall upgraded to version 20.49.0
 Upgrade to the latest update of this plugin and make sure the `password` field
