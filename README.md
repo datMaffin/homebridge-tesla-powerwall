@@ -320,7 +320,7 @@ For the setup of Google Drive, please follow the Google Drive Quickstart for Nod
 ```
 
 # FAQ
-### I Get a Login Error
+### I get a login error
 If you get a login error similar to:
 ```
 [4/16/2021, 6:56:52 PM] [Powerwall] error: null
