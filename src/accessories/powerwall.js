@@ -156,7 +156,7 @@ Powerwall.prototype = {
     },
 
     getStateSwitch: function(callback) {
-        this.onStatusGetter.requestValue(callback);
+        this.onStatusGetter.requestValue(callback, this.pollingInterval / 2);
     },
 
     setStateSwitch: function(state, callback) {
@@ -189,25 +189,25 @@ Powerwall.prototype = {
     },
 
     getBatteryLevel: function(callback) {
-        this.percentageGetter.requestValue(callback);
+        this.percentageGetter.requestValue(callback, this.pollingInterval / 2);
     },
 
     getChargingState: function(callback) {
         this.chargingGetter.requestValue(function(error, value) {
             callback(error, value < 0);
-        }.bind(this));
+        }.bind(this), this.pollingInterval / 2);
     },
 
     getLowBattery: function(callback) {
         this.percentageGetter.requestValue(function(error, value) {
             callback(error, value <= this.lowBattery);
-        }.bind(this));
+        }.bind(this), this.pollingInterval / 2);
     },
 
     getOnBatteryVisualizer: function(callback) {
         this.percentageGetter.requestValue(function(error, value) {
             callback(error, value !== 0);
-        }.bind(this));
+        }.bind(this), this.pollingInterval / 2);
     },
 
     setOnBatteryVisualizer: function(state, callback) {
@@ -218,7 +218,7 @@ Powerwall.prototype = {
     getHueBatteryVisualizer: function(callback) {
         this.percentageGetter.requestValue(function(error, value) {
             callback(error, (value/100) * 120 );
-        }.bind(this));
+        }.bind(this), this.pollingInterval / 2);
     },
 
     getConstantSaturationBatteryVisualizer: function(callback) {

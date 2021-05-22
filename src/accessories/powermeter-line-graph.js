@@ -69,7 +69,7 @@ PowerMeter.prototype = {
     getWatt: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
             callback(error, value);
-        });
+        }, this.pollingInterval / 2);
     },
 };
 

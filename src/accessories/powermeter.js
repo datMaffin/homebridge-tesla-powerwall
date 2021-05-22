@@ -122,13 +122,13 @@ PowerMeter.prototype = {
             // Do not allow negative numbers; 
             // negative values are illegal for the characteristic "Consumption"
             callback(error, Math.max(value, 0));
-        });
+        }, this.pollingInterval / 2);
     },
 
     getOnWattVisualizer: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
             callback(error, Math.round(value/100) !== 0);
-        });
+        }, this.pollingInterval / 2);
     },
 
     setOnWattVisualizer: function(state, callback) {
@@ -139,7 +139,7 @@ PowerMeter.prototype = {
     getRotSpWattVisualizer: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
             callback(error, value / 100); // 100 % = 10_000W
-        });
+        }, this.pollingInterval / 2);
     },
 
     setRotSpWattVisualizer: function(state, callback) {

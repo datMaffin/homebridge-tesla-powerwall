@@ -103,7 +103,7 @@ Gridstatus.prototype = {
     getGridIsUpSwitch: function(callback) {
         this.gridStatusGetter.requestValue(function(error, value) {
             callback(error, value === 'SystemGridConnected');
-        }.bind(this));
+        }.bind(this), this.pollingInterval / 2);
     },
 
     setGridIsUpSwitch: function(state, callback) {
@@ -114,7 +114,7 @@ Gridstatus.prototype = {
     getGridIsDownSwitch: function(callback) {
         this.gridStatusGetter.requestValue(function(error, value) {
             callback(error, value === 'SystemIslandedActive');
-        }.bind(this));
+        }.bind(this), this.pollingInterval / 2);
     },
 
     setGridIsDownSwitch: function(state, callback) {
@@ -125,7 +125,7 @@ Gridstatus.prototype = {
     getGridIsNotYetInSyncSwitch: function(callback) {
         this.gridStatusGetter.requestValue(function(error, value) {
             callback(error, value === 'SystemTransitionToGrid');
-        }.bind(this));
+        }.bind(this), this.pollingInterval / 2);
     },
 
     setGridIsNotYetInSyncSwitch: function(state, callback) {
