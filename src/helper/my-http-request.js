@@ -13,6 +13,12 @@ module.exports = function(url, callback, cacheInterval) {
     if (cacheInterval) {
         var cached = cache[url];
         if (cached && (Date.now() - cacheInterval) < cached.whenCached) {
+            // `setTimeout` is used here to call the callback in a non-blocking 
+            // way.
+            //
+            // While there should be no reason why a blocking callback would 
+            // not work here, calling callbacks in a non-blocking way *should*
+            // have been prefered in this codebase.
             setTimeout(function() {
                 callback(cached.error, cached.response, cached.body, true);
             }, 0);
