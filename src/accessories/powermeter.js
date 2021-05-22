@@ -52,7 +52,7 @@ PowerMeter.prototype = {
             eventPolling(this.wattVisualizer, Characteristic.On, this.pollingInterval);
             this.wattVisualizer
                 .getCharacteristic(Characteristic.RotationSpeed)
-                .setProps({maxValue: 100, minValue: -100, minStep: 1})
+                .setProps({maxValue: 100000, minValue: -100000, minStep: 1, unit: 'Watts'})
                 .on('get', this.getRotSpWattVisualizer.bind(this))
                 .on('set', this.setRotSpWattVisualizer.bind(this));
             eventPolling(this.wattVisualizer, Characteristic.RotationSpeed, this.pollingInterval);
@@ -127,7 +127,7 @@ PowerMeter.prototype = {
 
     getOnWattVisualizer: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
-            callback(error, Math.round(value/100) !== 0);
+            callback(error, Math.abs(value) >= 20);
         }, this.pollingInterval / 2);
     },
 
@@ -138,7 +138,7 @@ PowerMeter.prototype = {
 
     getRotSpWattVisualizer: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
-            callback(error, value / 100); // 100 % = 10_000W
+            callback(error, value);
         }, this.pollingInterval / 2);
     },
 
