@@ -32,14 +32,15 @@ ValueGetter.prototype = {
      * Request the value of the value getter
      *
      * @param {callback} callback The callback the value is given to
+     * @param {number} cacheInterval How long to cache the result for, or falsey to not cache
      */
-    requestValue: function(callback) {
+    requestValue: function(callback, cacheInterval) {
         this.log.debug('Requesting Value: ' + this.address);
         _httpGetRequest(
             this.address,
-            function(error, response, body) {
+            function(error, response, body, cached) {
                 var result;
-                if (_checkRequestError(this.log, error, response, body)) {
+                if (_checkRequestError(this.log, error, response, body, cached)) {
                     callback(error, this.manipulate(this.defaultValue));
                 } else {
                     result = _parseJSON(body);
@@ -55,6 +56,7 @@ ValueGetter.prototype = {
                     }
                     callback(null, this.manipulate(result));
                 }
-            }.bind(this));
+            }.bind(this),
+            cacheInterval);
     }
 };
