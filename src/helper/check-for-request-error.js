@@ -8,19 +8,32 @@
  * @param {boolean} cached Whether the response has been delivered from cache.
  */
 module.exports = function(log, error, response, body, cached) {
-    if (error || (response && response.statusCode >= 300)) {
+    if (error) {
         if (!cached) {
-            log('error: ', error);
-            log('status code: ', response && response.statusCode);
-            log('body: ', body);
+            log('Request failed:', error);
+        }
+        return true;
+    }
+    if (response && response.statusCode >= 300) {
+        if (!cached) {
+            try {
+                var jsonBody = JSON.parse(body);
+                if (jsonBody.message) {
+                    log('Unexpected response:', response.statusCode, jsonBody.message);
+                    return true;
+                }
+            } catch (jsonError) {
+
+            }
+            log('Unexpected response:', response.statusCode, body);
         }
         return true;
     }
 
     if (!cached) {
-        log.debug('error: ', error);
-        log.debug('status code: ', response && response.statusCode);
-        log.debug('body: ', body);
+        log.debug('error:', error);
+        log.debug('status code:', response && response.statusCode);
+        log.debug('body:', body);
     }
 
     return false;
