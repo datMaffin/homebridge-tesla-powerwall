@@ -21,8 +21,8 @@
   },
   "homepage": "https://github.com/datMaffin/homebridge-tesla-powerwall#readme",
   "engines": {
-    "node": ">=0.12.0",
-    "homebridge": ">=0.2.0"
+    "node": ">=6.17.1",
+    "homebridge": ">=0.9.0"
   },
   "dependencies": {
     "fakegato-history": "^0.5.1",
