@@ -3,6 +3,7 @@ var moment   = require('moment');
 var Polling = require('../helper/polling.js');
 var eventPolling = require('../helper/simple-event-polling.js');
 var reset = require('../helper/event-value-resetter.js');
+var _createFastGetter = require('../helper/fast-getter.js');
 
 var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 
@@ -47,13 +48,13 @@ PowerMeter.prototype = {
             this.wattVisualizer = new Service.Fan(this.name + ' ' + 'Flow');
             this.wattVisualizer
                 .getCharacteristic(Characteristic.On)
-                .on('get', this.getOnWattVisualizer.bind(this))
+                .on('get', _createFastGetter(this.getOnWattVisualizer.bind(this), this.log))
                 .on('set', this.setOnWattVisualizer.bind(this));
             eventPolling(this.wattVisualizer, Characteristic.On, this.pollingInterval);
             this.wattVisualizer
                 .getCharacteristic(Characteristic.RotationSpeed)
                 .setProps({maxValue: 100000, minValue: -100000, minStep: 1, unit: 'Watts'})
-                .on('get', this.getRotSpWattVisualizer.bind(this))
+                .on('get', _createFastGetter(this.getRotSpWattVisualizer.bind(this), this.log))
                 .on('set', this.setRotSpWattVisualizer.bind(this));
             eventPolling(this.wattVisualizer, Characteristic.RotationSpeed, this.pollingInterval);
             services.push(this.wattVisualizer);
@@ -67,7 +68,7 @@ PowerMeter.prototype = {
                 'Power Meter');
             this.powerConsumption
                 .getCharacteristic(Characteristic.CurrentPowerConsumption)
-                .on('get', this.getWatt.bind(this));
+                .on('get', _createFastGetter(this.getWatt.bind(this), this.log));
             eventPolling(this.powerConsumption, Characteristic.CurrentPowerConsumption, this.pollingInterval);
             services.push(this.powerConsumption);
         }
@@ -79,7 +80,7 @@ PowerMeter.prototype = {
             this.powerConsumption
                 .getCharacteristic(Characteristic.ResetTotal)
                 .on('set', this.setResetTotalConsumption.bind(this))
-                .on('get', this.getResetTotalConsumption.bind(this));
+                .on('get', _createFastGetter(this.getResetTotalConsumption.bind(this), this.log));
 
             this.powerMeterHistory = 
                 new FakeGatoHistoryService('energy', this, FakeGatoHistorySetting);
