@@ -6,6 +6,7 @@ var reset = require('../helper/event-value-resetter.js');
 
 var _httpGetRequest = require('../helper/my-http-request.js');
 var _checkRequestError = require('../helper/check-for-request-error.js');
+var _createFastGetter = require('../helper/fast-getter.js');
 
 
 var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
@@ -59,7 +60,7 @@ Powerwall.prototype = {
         this.stateSwitch = new Service.Switch(this.name, "1");
         this.stateSwitch
             .getCharacteristic(Characteristic.On)
-            .on('get', this.getStateSwitch.bind(this))
+            .on('get', _createFastGetter(this.getStateSwitch.bind(this), this.log))
             .on('set', this.setStateSwitch.bind(this));
         eventPolling(this.stateSwitch, Characteristic.On, this.pollingInterval);
         services.push(this.stateSwitch);
@@ -68,15 +69,15 @@ Powerwall.prototype = {
             new Service.BatteryService(this.name + ' ' + 'Battery');
         this.battery
             .getCharacteristic(Characteristic.BatteryLevel)
-            .on('get', this.getBatteryLevel.bind(this));
+            .on('get', _createFastGetter(this.getBatteryLevel.bind(this), this.log));
         eventPolling(this.battery, Characteristic.BatteryLevel, this.pollingInterval);
         this.battery
             .getCharacteristic(Characteristic.ChargingState)
-            .on('get', this.getChargingState.bind(this));
+            .on('get', _createFastGetter(this.getChargingState.bind(this), this.log));
         eventPolling(this.battery, Characteristic.ChargingState, this.pollingInterval);
         this.battery
             .getCharacteristic(Characteristic.StatusLowBattery)
-            .on('get', this.getLowBattery.bind(this));
+            .on('get', _createFastGetter(this.getLowBattery.bind(this), this.log));
         eventPolling(this.battery, Characteristic.StatusLowBattery, this.pollingInterval);
         services.push(this.battery);
 
@@ -85,22 +86,22 @@ Powerwall.prototype = {
                 new Service.Lightbulb(this.name + ' ' + 'Charge');
             this.batteryVisualizer
                 .getCharacteristic(Characteristic.On)
-                .on('get', this.getOnBatteryVisualizer.bind(this))
+                .on('get', _createFastGetter(this.getOnBatteryVisualizer.bind(this), this.log))
                 .on('set', this.setOnBatteryVisualizer.bind(this));
             eventPolling(this.batteryVisualizer, Characteristic.On, this.pollingInterval);
             this.batteryVisualizer
                 .getCharacteristic(Characteristic.Hue)
-                .on('get', this.getHueBatteryVisualizer.bind(this))
+                .on('get', _createFastGetter(this.getHueBatteryVisualizer.bind(this), this.log))
                 .on('set', this.setHueBatteryVisualizer.bind(this));
             eventPolling(this.batteryVisualizer, Characteristic.Hue, this.pollingInterval);
             this.batteryVisualizer
                 .getCharacteristic(Characteristic.Brightness)
-                .on('get', this.getBatteryLevel.bind(this))
+                .on('get', _createFastGetter(this.getBatteryLevel.bind(this), this.log))
                 .on('set', this.setBrightnessBatteryVisualizer.bind(this));
             eventPolling(this.batteryVisualizer, Characteristic.Brightness, this.pollingInterval);
             this.batteryVisualizer // Set saturation to fix compatibility with Homebridge Alexa
                 .getCharacteristic(Characteristic.Saturation)
-                .on('get', this.getConstantSaturationBatteryVisualizer.bind(this))
+                .on('get', _createFastGetter(this.getConstantSaturationBatteryVisualizer.bind(this), this.log))
                 .on('set', this.setSaturationBatteryVisualizer.bind(this));
             services.push(this.batteryVisualizer);
         }
@@ -116,7 +117,7 @@ Powerwall.prototype = {
                     minValue: 0,
                     maxValue: 100
                 })
-                .on('get', this.getBatteryLevel.bind(this));
+                .on('get', _createFastGetter(this.getBatteryLevel.bind(this), this.log));
             eventPolling(this.batteryCharge, Characteristic.CurrentTemperature, this.pollingInterval);
             services.push(this.batteryCharge);
 
@@ -136,7 +137,7 @@ Powerwall.prototype = {
             this.batteryIsLowSwitch = new Service.Switch(this.name + ' State: "Battery Is Low"', '2');
             this.batteryIsLowSwitch
                 .getCharacteristic(Characteristic.On)
-                .on('get', this.getLowBattery.bind(this))
+                .on('get', _createFastGetter(this.getLowBattery.bind(this), this.log))
                 .on('set', this.setBatteryIsLowSwitch.bind(this));
             eventPolling(this.batteryIsLowSwitch, Characteristic.On, this.pollingInterval);
             services.push(this.batteryIsLowSwitch);
@@ -146,7 +147,7 @@ Powerwall.prototype = {
             this.batteryIsChargingSwitch = new Service.Switch(this.name + ' State: "Battery Is Charging"', '3');
             this.batteryIsChargingSwitch
                 .getCharacteristic(Characteristic.On)
-                .on('get', this.getChargingState.bind(this))
+                .on('get', _createFastGetter(this.getChargingState.bind(this), this.log))
                 .on('set', this.setBatteryIsChargingSwitch.bind(this));
             eventPolling(this.batteryIsChargingSwitch, Characteristic.On, this.pollingInterval);
             services.push(this.batteryIsChargingSwitch);

@@ -6,7 +6,7 @@ var reset = require('../helper/event-value-resetter.js');
 
 var _httpGetRequest = require('../helper/my-http-request.js');
 var _checkRequestError = require('../helper/check-for-request-error.js');
-
+var _createFastGetter = require('../helper/fast-getter.js');
 
 var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 
@@ -53,7 +53,7 @@ Gridstatus.prototype = {
             this.gridIsUpSwitch = new Service.Switch(this.name + ' "Up"', '1');
             this.gridIsUpSwitch
                 .getCharacteristic(Characteristic.On)
-                .on('get', this.getGridIsUpSwitch.bind(this))
+                .on('get', _createFastGetter(this.getGridIsUpSwitch.bind(this), this.log))
                 .on('set', this.setGridIsUpSwitch.bind(this));
             eventPolling(this.gridIsUpSwitch, Characteristic.On, this.pollingInterval);
             services.push(this.gridIsUpSwitch);
@@ -63,7 +63,7 @@ Gridstatus.prototype = {
             this.gridIsDownSwitch = new Service.Switch(this.name + ' "Down"', '2');
             this.gridIsDownSwitch
                 .getCharacteristic(Characteristic.On)
-                .on('get', this.getGridIsDownSwitch.bind(this))
+                .on('get', _createFastGetter(this.getGridIsDownSwitch.bind(this), this.log))
                 .on('set', this.setGridIsDownSwitch.bind(this));
             eventPolling(this.gridIsDownSwitch, Characteristic.On, this.pollingInterval);
             services.push(this.gridIsDownSwitch);
@@ -73,7 +73,7 @@ Gridstatus.prototype = {
             this.gridIsNotYetInSyncSwitch = new Service.Switch(this.name + ' "Not Yet In Sync"', '3');
             this.gridIsNotYetInSyncSwitch
                 .getCharacteristic(Characteristic.On)
-                .on('get', this.getGridIsNotYetInSyncSwitch.bind(this))
+                .on('get', _createFastGetter(this.getGridIsNotYetInSyncSwitch.bind(this), this.log))
                 .on('set', this.setGridIsNotYetInSyncSwitch.bind(this));
             eventPolling(this.gridIsNotYetInSyncSwitch, Characteristic.On, this.pollingInterval);
             services.push(this.gridIsNotYetInSyncSwitch);
@@ -83,7 +83,7 @@ Gridstatus.prototype = {
             this.gridIsUpSensor = new Service.ContactSensor(this.name + ' "Up" Sensor', '4');
             this.gridIsUpSensor
                 .getCharacteristic(Characteristic.ContactSensorState)
-                .on('get', this.getGridIsUpSwitch.bind(this))
+                .on('get', _createFastGetter(this.getGridIsUpSwitch.bind(this), this.log))
             eventPolling(this.gridIsUpSensor, Characteristic.ContactSensorState, this.pollingInterval);
             services.push(this.gridIsUpSensor);
         }
@@ -92,7 +92,7 @@ Gridstatus.prototype = {
             this.gridIsDownSensor = new Service.ContactSensor(this.name + ' "Down" Sensor', '5');
             this.gridIsDownSensor
                 .getCharacteristic(Characteristic.ContactSensorState)
-                .on('get', this.getGridIsDownSwitch.bind(this))
+                .on('get', _createFastGetter(this.getGridIsDownSwitch.bind(this), this.log))
             eventPolling(this.gridIsDownSensor, Characteristic.ContactSensorState, this.pollingInterval);
             services.push(this.gridIsDownSensor);
         }

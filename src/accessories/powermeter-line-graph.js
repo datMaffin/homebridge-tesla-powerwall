@@ -2,6 +2,7 @@ var moment   = require('moment');
 
 var Polling = require('../helper/polling.js');
 var eventPolling = require('../helper/simple-event-polling.js');
+var _createFastGetter = require('../helper/fast-getter.js');
 
 var Characteristic, Service, FakeGatoHistoryService, FakeGatoHistorySetting;
 
@@ -49,7 +50,7 @@ PowerMeter.prototype = {
                 minValue: -10000,
                 maxValue: 10000
             })
-            .on('get', this.getWatt.bind(this));
+            .on('get', _createFastGetter(this.getWatt.bind(this), this.log));
         eventPolling(this.energyLG, Characteristic.CurrentTemperature, this.pollingInterval);
         services.push(this.energyLG);
 
