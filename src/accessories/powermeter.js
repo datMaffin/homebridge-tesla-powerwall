@@ -158,6 +158,7 @@ PowerMeter.prototype = {
 
     getResetTotalConsumption: function(callback) {
         callback(
+            null,
             (this.powerMeterHistory.getExtraPersistedData() &&
             this.powerMeterHistory.getExtraPersistedData().lastReset) || 0);
     },
