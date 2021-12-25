@@ -13,8 +13,6 @@ If you like this plugin, it is possible to donate a "cup of coffee" via Paypal:
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/HomebridgePowerwall)
 
-And/Or leave a comment:
-https://teslamotorsclub.com/tmc/threads/tesla-powerwall-homekit-support-through-homebridge.116416/
 
 # Installation
 1. Install [Homebridge](https://github.com/nfarina/homebridge): `sudo npm install -g --unsafe-perm homebridge`
@@ -122,8 +120,7 @@ Optional:
     field is true, it will not have any effect.
     The switch is always going to update its state based on the received state. 
   - *Powermeter* i.e. `solar`, `grid`, `battery`, `home`
-    + `*.homekitVisual`: Adds a fan service; sets the speed to the 
-      current power times 100; 100% is equal to 10000W.
+    + `*.homekitVisual`: Adds a fan service displaying the current power in watts.
     + `*.evePowerMeter`: Adds an Eve powermeter service.
     + `*.evehistory`: Adds the total consumption to an Eve powermeter service.
       Only works when `evePowerMeter` is also set to true.
