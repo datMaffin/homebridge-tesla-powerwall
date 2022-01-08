@@ -58,27 +58,35 @@ Optional:
                     "homekitVisual": true,
                     "evePowerMeter": true,
                     "eveHistory": true,
-                    "eveLineGraph": false
+                    "eveLineGraph": false,
+                    "feedingToSensor": false,
+                    "pullingFromSensor": false
                 },
                 "grid": {
                     "homekitVisual": true,
                     "positiveEvePowerMeter": true,
                     "negativeEvePowerMeter": true,
                     "eveHistory": true,
-                    "eveLineGraph": false
+                    "eveLineGraph": false,
+                    "feedingToSensor": false,
+                    "pullingFromSensor": false
                 },
                 "battery": {
                     "homekitVisual": true,
                     "positiveEvePowerMeter": true,
                     "negativeEvePowerMeter": true,
                     "eveHistory": true,
-                    "eveLineGraph": false
+                    "eveLineGraph": false,
+                    "feedingToSensor": false,
+                    "pullingFromSensor": false
                 },
                 "home": {
                     "homekitVisual": true,
                     "evePowerMeter": true,
                     "eveHistory": true,
-                    "eveLineGraph": false
+                    "eveLineGraph": false,
+                    "feedingToSensor": false,
+                    "pullingFromSensor": false
                 },
                 "gridstatus": {
                     "gridIsDownSwitch": false,

@@ -115,7 +115,37 @@ PowerMeter.prototype = {
             }.bind(this));
         }
 
+        // Sensors
+        if (this.additionalServices.feedingToSensor) {
+            this.feedingToSensor = new Service.ContactSensor(this.name + ' "Feeding To" Sensor', '4');
+            this.feedingToSensor
+                .getCharacteristic(Characteristic.ContactSensorState)
+                .on('get', _createFastGetter(this.getIsFeedingTo.bind(this), this.log))
+            eventPolling(this.feedingToSensor, Characteristic.ContactSensorState, this.pollingInterval);
+            services.push(this.feedingToSensor);
+        }
+        if (this.additionalServices.pullingFromSensor) {
+            this.pullingFromSensor = new Service.ContactSensor(this.name + ' "Pulling From" Sensor', '5');
+            this.pullingFromSensor
+                .getCharacteristic(Characteristic.ContactSensorState)
+                .on('get', _createFastGetter(this.getIsPullingFrom.bind(this), this.log))
+            eventPolling(this.pullingFromSensor, Characteristic.ContactSensorState, this.pollingInterval);
+            services.push(this.pullingFromSensor);
+        }
+
         return services;
+    },
+
+    getIsFeedingTo: function(callback) {
+        this.wattGetter.requestValue(function(error, value) {
+            callback(error, value < 0);
+        }.bind(this), this.pollingInterval / 2);
+    },
+
+    getIsPullingFrom: function(callback) {
+        this.wattGetter.requestValue(function(error, value) {
+            callback(error, value > 0);
+        }.bind(this), this.pollingInterval / 2);
     },
 
     getWatt: function(callback) {

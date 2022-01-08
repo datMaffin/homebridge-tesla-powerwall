@@ -105,7 +105,11 @@ function TeslaPowerwall(log, config) {
             eveHistory:
                 defaultValue(config, ['additionalServices', 'solar', 'eveHistory'], true),
             eveLineGraph:
-                defaultValue(config, ['additionalServices', 'solar', 'eveLineGraph'], false)
+                defaultValue(config, ['additionalServices', 'solar', 'eveLineGraph'], false),
+            feedingToSensor:
+                defaultValue(config, ['additionalServices', 'solar', 'feedingToSensor'], false),
+            pullingFromSensor:
+                defaultValue(config, ['additionalServices', 'solar', 'pullingFromSensor'], false)
         },
         grid: {
             homekitVisual:
@@ -117,7 +121,11 @@ function TeslaPowerwall(log, config) {
             eveHistory:
                 defaultValue(config, ['additionalServices', 'grid', 'eveHistory'], true),
             eveLineGraph:
-                defaultValue(config, ['additionalServices', 'grid', 'eveLineGraph'], false)
+                defaultValue(config, ['additionalServices', 'grid', 'eveLineGraph'], false),
+            feedingToSensor:
+                defaultValue(config, ['additionalServices', 'grid', 'feedingToSensor'], false),
+            pullingFromSensor:
+                defaultValue(config, ['additionalServices', 'grid', 'pullingFromSensor'], false)
         },
         battery: {
             homekitVisual:
@@ -129,7 +137,11 @@ function TeslaPowerwall(log, config) {
             eveHistory:
                 defaultValue(config, ['additionalServices', 'battery', 'eveHistory'], true),
             eveLineGraph:
-                defaultValue(config, ['additionalServices', 'battery', 'eveLineGraph'], false)
+                defaultValue(config, ['additionalServices', 'battery', 'eveLineGraph'], false),
+            feedingToSensor:
+                defaultValue(config, ['additionalServices', 'battery', 'feedingToSensor'], false),
+            pullingFromSensor:
+                defaultValue(config, ['additionalServices', 'battery', 'pullingFromSensor'], false)
         },
         home: {
             homekitVisual:
@@ -139,7 +151,11 @@ function TeslaPowerwall(log, config) {
             eveHistory:
                 defaultValue(config, ['additionalServices', 'home', 'eveHistory'], true),
             eveLineGraph:
-                defaultValue(config, ['additionalServices', 'home', 'eveLineGraph'], false)
+                defaultValue(config, ['additionalServices', 'home', 'eveLineGraph'], false),
+            feedingToSensor:
+                defaultValue(config, ['additionalServices', 'home', 'feedingToSensor'], false),
+            pullingFromSensor:
+                defaultValue(config, ['additionalServices', 'home', 'pullingFromSensor'], false)
         },
         gridstatus: {
             gridIsDownSwitch:
@@ -245,7 +261,9 @@ TeslaPowerwall.prototype = {
                 this.additionalServices.solar.homekitVisual ||
                 this.additionalServices.solar.evePowerMeter ||
                 this.additionalServices.solar.eveHistory ||
-                this.additionalServices.solar.eveLineGraph
+                this.additionalServices.solar.eveLineGraph ||
+                this.additionalServices.solar.feedingToSensor ||
+                this.additionalServices.solar.pullingFromSensor
             )
         ) {
             var solarGetter = new ValueGetter(
@@ -282,7 +300,9 @@ TeslaPowerwall.prototype = {
                 this.additionalServices.grid.positiveEvePowerMeter ||
                 this.additionalServices.grid.negativeEvePowerMeter ||
                 this.additionalServices.grid.eveHistory ||
-                this.additionalServices.grid.eveLineGraph
+                this.additionalServices.grid.eveLineGraph ||
+                this.additionalServices.grid.feedingToSensor ||
+                this.additionalServices.grid.pullingFromSensor
             )
         ) {
             var gridGetter = new ValueGetter(
@@ -341,7 +361,9 @@ TeslaPowerwall.prototype = {
                 this.additionalServices.battery.positiveEvePowerMeter ||
                 this.additionalServices.battery.negativeEvePowerMeter ||
                 this.additionalServices.battery.eveHistory ||
-                this.additionalServices.battery.eveLineGraph
+                this.additionalServices.battery.eveLineGraph ||
+                this.additionalServices.battery.feedingToSensor ||
+                this.additionalServices.battery.pullingFromSensor
             )
         ) {
             var batteryGetter = new ValueGetter(
@@ -399,7 +421,9 @@ TeslaPowerwall.prototype = {
                 this.additionalServices.home.homekitVisual ||
                 this.additionalServices.home.evePowerMeter ||
                 this.additionalServices.home.eveHistory ||
-                this.additionalServices.home.eveLineGraph
+                this.additionalServices.home.eveLineGraph ||
+                this.additionalServices.home.feedingToSensor ||
+                this.additionalServices.home.pullingFromSensor
             )
         ) {
             var homeGetter = new ValueGetter(
