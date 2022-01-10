@@ -278,6 +278,8 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.solar.homekitVisual,
                     evePowerMeter: this.additionalServices.solar.evePowerMeter,
                     eveHistory:    this.additionalServices.solar.eveHistory,
+                    feedingToSensor:   this.additionalServices.solar.feedingToSensor,
+                    pullingFromSensor: this.additionalServices.solar.pullingFromSensor,
                 }
             };
             accessories.push(new PowerMeter(this.log, solarConfig));
@@ -317,6 +319,8 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.grid.homekitVisual,
                     evePowerMeter: this.additionalServices.grid.positiveEvePowerMeter,
                     eveHistory:    this.additionalServices.grid.eveHistory,
+                    feedingToSensor:   this.additionalServices.grid.feedingToSensor,
+                    pullingFromSensor: this.additionalServices.grid.pullingFromSensor,
                 }
             };
             accessories.push(new PowerMeter(this.log, gridConfig));
@@ -378,6 +382,8 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.battery.homekitVisual,
                     evePowerMeter: this.additionalServices.battery.positiveEvePowerMeter,
                     eveHistory:    this.additionalServices.battery.eveHistory,
+                    feedingToSensor:   this.additionalServices.battery.feedingToSensor,
+                    pullingFromSensor: this.additionalServices.battery.pullingFromSensor,
                 }
             };
             accessories.push(new PowerMeter(this.log, batteryConfig));
@@ -438,6 +444,8 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.home.homekitVisual,
                     evePowerMeter: this.additionalServices.home.evePowerMeter,
                     eveHistory:    this.additionalServices.home.eveHistory,
+                    feedingToSensor:   this.additionalServices.home.feedingToSensor,
+                    pullingFromSensor: this.additionalServices.home.pullingFromSensor,
                 }
             };
             accessories.push(new PowerMeter(this.log, homeConfig));
