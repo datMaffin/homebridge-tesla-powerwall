@@ -59,8 +59,8 @@ Optional:
                     "evePowerMeter": true,
                     "eveHistory": true,
                     "eveLineGraph": false,
-                    "feedingToSensor": false,
-                    "pullingFromSensor": false
+                    "pullingFromSensor": false,
+                    "sensorThreshold": 0
                 },
                 "grid": {
                     "homekitVisual": true,
@@ -69,7 +69,8 @@ Optional:
                     "eveHistory": true,
                     "eveLineGraph": false,
                     "feedingToSensor": false,
-                    "pullingFromSensor": false
+                    "pullingFromSensor": false,
+                    "sensorThreshold": 0
                 },
                 "battery": {
                     "homekitVisual": true,
@@ -78,7 +79,8 @@ Optional:
                     "eveHistory": true,
                     "eveLineGraph": false,
                     "feedingToSensor": false,
-                    "pullingFromSensor": false
+                    "pullingFromSensor": false,
+                    "sensorThreshold": 0
                 },
                 "home": {
                     "homekitVisual": true,
@@ -86,7 +88,7 @@ Optional:
                     "eveHistory": true,
                     "eveLineGraph": false,
                     "feedingToSensor": false,
-                    "pullingFromSensor": false
+                    "sensorThreshold": 0
                 },
                 "gridstatus": {
                     "gridIsDownSwitch": false,
@@ -119,6 +121,7 @@ Optional:
     implementing Homekit automations.)
   - *`...Sensor`*: Adds a sensor that represents the current state. (Useful for 
     implementing Homekit automations.)
+  - `sensorThreshold`: Moves the "zero" point based on the threshold value.
   - `powerwall.homekitVisual`: Adds a lamp service representing the battery 
     level.
   - `powerwall.eveHistory`: Adds an Eve weather service; sets the temperature

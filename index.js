@@ -106,10 +106,10 @@ function TeslaPowerwall(log, config) {
                 defaultValue(config, ['additionalServices', 'solar', 'eveHistory'], true),
             eveLineGraph:
                 defaultValue(config, ['additionalServices', 'solar', 'eveLineGraph'], false),
-            feedingToSensor:
-                defaultValue(config, ['additionalServices', 'solar', 'feedingToSensor'], false),
             pullingFromSensor:
-                defaultValue(config, ['additionalServices', 'solar', 'pullingFromSensor'], false)
+                defaultValue(config, ['additionalServices', 'solar', 'pullingFromSensor'], false),
+            sensorThreshold:
+                defaultValue(config, ['additionalServices', 'solar', 'sensorThreshold'], 0)
         },
         grid: {
             homekitVisual:
@@ -125,7 +125,9 @@ function TeslaPowerwall(log, config) {
             feedingToSensor:
                 defaultValue(config, ['additionalServices', 'grid', 'feedingToSensor'], false),
             pullingFromSensor:
-                defaultValue(config, ['additionalServices', 'grid', 'pullingFromSensor'], false)
+                defaultValue(config, ['additionalServices', 'grid', 'pullingFromSensor'], false),
+            sensorThreshold:
+                defaultValue(config, ['additionalServices', 'grid', 'sensorThreshold'], 0)
         },
         battery: {
             homekitVisual:
@@ -141,7 +143,9 @@ function TeslaPowerwall(log, config) {
             feedingToSensor:
                 defaultValue(config, ['additionalServices', 'battery', 'feedingToSensor'], false),
             pullingFromSensor:
-                defaultValue(config, ['additionalServices', 'battery', 'pullingFromSensor'], false)
+                defaultValue(config, ['additionalServices', 'battery', 'pullingFromSensor'], false),
+            sensorThreshold:
+                defaultValue(config, ['additionalServices', 'battery', 'sensorThreshold'], 0)
         },
         home: {
             homekitVisual:
@@ -154,8 +158,8 @@ function TeslaPowerwall(log, config) {
                 defaultValue(config, ['additionalServices', 'home', 'eveLineGraph'], false),
             feedingToSensor:
                 defaultValue(config, ['additionalServices', 'home', 'feedingToSensor'], false),
-            pullingFromSensor:
-                defaultValue(config, ['additionalServices', 'home', 'pullingFromSensor'], false)
+            sensorThreshold:
+                defaultValue(config, ['additionalServices', 'home', 'sensorThreshold'], 0)
         },
         gridstatus: {
             gridIsDownSwitch:
@@ -278,8 +282,9 @@ TeslaPowerwall.prototype = {
                     homekitVisual: this.additionalServices.solar.homekitVisual,
                     evePowerMeter: this.additionalServices.solar.evePowerMeter,
                     eveHistory:    this.additionalServices.solar.eveHistory,
-                    feedingToSensor:   this.additionalServices.solar.feedingToSensor,
+                    feedingToSensor:   false,
                     pullingFromSensor: this.additionalServices.solar.pullingFromSensor,
+                    sensorThreshold:   this.additionalServices.solar.sensorThreshold,
                 }
             };
             accessories.push(new PowerMeter(this.log, solarConfig));
@@ -321,6 +326,7 @@ TeslaPowerwall.prototype = {
                     eveHistory:    this.additionalServices.grid.eveHistory,
                     feedingToSensor:   this.additionalServices.grid.feedingToSensor,
                     pullingFromSensor: this.additionalServices.grid.pullingFromSensor,
+                    sensorThreshold:   this.additionalServices.grid.sensorThreshold,
                 }
             };
             accessories.push(new PowerMeter(this.log, gridConfig));
@@ -384,6 +390,7 @@ TeslaPowerwall.prototype = {
                     eveHistory:    this.additionalServices.battery.eveHistory,
                     feedingToSensor:   this.additionalServices.battery.feedingToSensor,
                     pullingFromSensor: this.additionalServices.battery.pullingFromSensor,
+                    sensorThreshold:   this.additionalServices.battery.sensorThreshold,
                 }
             };
             accessories.push(new PowerMeter(this.log, batteryConfig));
@@ -440,12 +447,14 @@ TeslaPowerwall.prototype = {
                 historyInterval: this.historyInterval,
                 wattGetter:      homeGetter,
                 uniqueId:        '4_home',
+                reverseFeedPull:  true,
                 additionalServices: {
                     homekitVisual: this.additionalServices.home.homekitVisual,
                     evePowerMeter: this.additionalServices.home.evePowerMeter,
                     eveHistory:    this.additionalServices.home.eveHistory,
                     feedingToSensor:   this.additionalServices.home.feedingToSensor,
-                    pullingFromSensor: this.additionalServices.home.pullingFromSensor,
+                    pullingFromSensor: false,
+                    sensorThreshold:   this.additionalServices.home.sensorThreshold,
                 }
             };
             accessories.push(new PowerMeter(this.log, homeConfig));

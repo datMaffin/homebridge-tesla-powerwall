@@ -27,6 +27,12 @@ function PowerMeter(log, config) {
     this.pollingInterval  = config.pollingInterval;
     this.historyInterval  = config.historyInterval;
     this.wattGetter       = config.wattGetter;
+    this.reverseFeedPull  = config.reverseFeedPull || false;
+    this.sensorThreshold  = config.sensorThreshold || 0;
+
+    if (reverseFeedPull === true) {
+        this.sensorThreshold = -this.sensorThreshold;
+    }
 
     this.additionalServices = config.additionalServices;
 }
@@ -118,17 +124,29 @@ PowerMeter.prototype = {
         // Sensors
         if (this.additionalServices.feedingToSensor) {
             this.feedingToSensor = new Service.ContactSensor(this.name + ' "Feeding To" Sensor', '4');
-            this.feedingToSensor
-                .getCharacteristic(Characteristic.ContactSensorState)
-                .on('get', _createFastGetter(this.getIsFeedingTo.bind(this), this.log))
+            if (this.switchFeedPull === false) {
+                this.feedingToSensor
+                    .getCharacteristic(Characteristic.ContactSensorState)
+                    .on('get', _createFastGetter(this.getIsFeedingTo.bind(this), this.log));
+            } else {
+                this.feedingToSensor
+                    .getCharacteristic(Characteristic.ContactSensorState)
+                    .on('get', _createFastGetter(this.getIsPullingFrom.bind(this), this.log));
+            }
             eventPolling(this.feedingToSensor, Characteristic.ContactSensorState, this.pollingInterval);
             services.push(this.feedingToSensor);
         }
         if (this.additionalServices.pullingFromSensor) {
             this.pullingFromSensor = new Service.ContactSensor(this.name + ' "Pulling From" Sensor', '5');
-            this.pullingFromSensor
-                .getCharacteristic(Characteristic.ContactSensorState)
-                .on('get', _createFastGetter(this.getIsPullingFrom.bind(this), this.log))
+            if (this.switchFeedPull === false) {
+                this.pullingFromSensor
+                    .getCharacteristic(Characteristic.ContactSensorState)
+                    .on('get', _createFastGetter(this.getIsPullingFrom.bind(this), this.log));
+            } else {
+                this.pullingFromSensor
+                    .getCharacteristic(Characteristic.ContactSensorState)
+                    .on('get', _createFastGetter(this.getIsFeedingTo.bind(this), this.log));
+            }
             eventPolling(this.pullingFromSensor, Characteristic.ContactSensorState, this.pollingInterval);
             services.push(this.pullingFromSensor);
         }
@@ -138,13 +156,13 @@ PowerMeter.prototype = {
 
     getIsFeedingTo: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
-            callback(error, value < 0);
+            callback(error, value < this.sensorThreshold);
         }.bind(this), this.pollingInterval / 2);
     },
 
     getIsPullingFrom: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
-            callback(error, value > 0);
+            callback(error, value > this.sensorThreshold);
         }.bind(this), this.pollingInterval / 2);
     },
 
