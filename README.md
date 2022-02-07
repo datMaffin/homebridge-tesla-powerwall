@@ -337,6 +337,7 @@ If you get a login error similar to:
 ```
 * Ensure that the password is correct. Regarding the username, currently only "customer" (the default) will be accepted by the powerwall.
 * The powerwall might require a re-registration and password update.
+* Take a look at [issue #33](https://github.com/datMaffin/homebridge-tesla-powerwall/issues/33). Further feedback would always be appreciated.
 
 ### Plugin stopped working after the Powerwall upgraded to version 20.49.0
 Upgrade to the latest update of this plugin and make sure the `password` field
