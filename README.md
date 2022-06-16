@@ -13,9 +13,13 @@ If you like this plugin, it is possible to donate a "cup of coffee" via Paypal:
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/HomebridgePowerwall)
 
-
 # Installation
-1. Install [Homebridge](https://github.com/nfarina/homebridge): `sudo npm install -g --unsafe-perm homebridge`
+1. Install [Homebridge](https://github.com/homebridge/homebridge): see the [Homebridge wiki](https://github.com/homebridge/homebridge/wiki)
+2. In the Homebridge Web-GUI, search for the "Tesla Powerwall" plugin and install it.
+3. Adapt the `config.json` using the config view; add this plugin as a "platform" to your `config.json` file.
+
+#### Legacy Installation Instructions
+1. Install [Homebridge](https://github.com/homebridge/homebridge): `sudo npm install -g --unsafe-perm homebridge`
 2. Install this plugin `sudo npm install -g homebridge-tesla-powerwall`
 3. Add this plugin as a platform to your `config.json` file
 
