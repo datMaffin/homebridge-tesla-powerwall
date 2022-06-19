@@ -125,7 +125,13 @@ Optional:
     implementing Homekit automations.)
   - *`...Sensor`*: Adds a sensor that represents the current state. (Useful for 
     implementing Homekit automations.)
-  - `sensorThreshold`: Moves the "zero" point based on the threshold value.
+  - `sensorThreshold`: Defines the deadzone in which none of the sensors will
+    be active. E.g., when `sensorThreshold=10`, then the sensors will only
+    become active when the value is `>10` or `<-10`. Values close to zero will
+    then therefore not trigger a sensor. Note that this means that for a
+    `sensorThreshold` greater than `0` that the two sensors are **both** 
+    disabled when value is in the deadzone.
+    Only a positive value makes sense for this option.
   - `powerwall.homekitVisual`: Adds a lamp service representing the battery 
     level.
   - `powerwall.eveHistory`: Adds an Eve weather service; sets the temperature

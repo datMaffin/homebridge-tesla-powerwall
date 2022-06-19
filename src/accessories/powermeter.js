@@ -30,10 +30,6 @@ function PowerMeter(log, config) {
     this.reverseFeedPull  = config.reverseFeedPull || false;
     this.sensorThreshold  = config.sensorThreshold || 0;
 
-    if (this.reverseFeedPull === true) {
-        this.sensorThreshold = -this.sensorThreshold;
-    }
-
     this.additionalServices = config.additionalServices;
 }
 
@@ -156,13 +152,21 @@ PowerMeter.prototype = {
 
     getIsFeedingTo: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
-            callback(error, value < this.sensorThreshold);
+            if (!this.reverseFeedPull) {
+                callback(error, value < -this.sensorThreshold);
+            } else {
+                callback(error, value > this.sensorThreshold);
+            }
         }.bind(this), this.pollingInterval / 2);
     },
 
     getIsPullingFrom: function(callback) {
         this.wattGetter.requestValue(function(error, value) {
-            callback(error, value > this.sensorThreshold);
+            if (!this.reverseFeedPull) {
+                callback(error, value > this.sensorThreshold);
+            } else {
+                callback(error, value < -this.sensorThreshold);
+            }
         }.bind(this), this.pollingInterval / 2);
     },
 
