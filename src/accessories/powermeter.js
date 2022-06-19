@@ -30,7 +30,7 @@ function PowerMeter(log, config) {
     this.reverseFeedPull  = config.reverseFeedPull || false;
     this.sensorThreshold  = config.sensorThreshold || 0;
 
-    if (reverseFeedPull === true) {
+    if (this.reverseFeedPull === true) {
         this.sensorThreshold = -this.sensorThreshold;
     }
 
