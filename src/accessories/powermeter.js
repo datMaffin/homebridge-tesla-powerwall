@@ -28,9 +28,9 @@ function PowerMeter(log, config) {
     this.historyInterval  = config.historyInterval;
     this.wattGetter       = config.wattGetter;
     this.reverseFeedPull  = config.reverseFeedPull || false;
-    this.sensorThreshold  = config.sensorThreshold || 0;
 
     this.additionalServices = config.additionalServices;
+    this.sensorThreshold  = config.additionalServices.sensorThreshold || 0;
 }
 
 
