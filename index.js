@@ -595,8 +595,10 @@ var defaultValue = function(start, listOfAttr, fallback) {
         result = result[listOfAttr[att]];
     }
 
-    if (result === true || result ===false)
-        return result;
-    else
+    if (result === undefined || result === null) {
         return fallback;
+    } else {
+        return result;
+    }
+
 };
