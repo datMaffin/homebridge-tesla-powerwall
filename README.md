@@ -1,3 +1,20 @@
+## Effectively archived
+*(I will not use the GitHub archive mechanism such that everyone can still interact with the issue tracker.)*
+
+As it is easy to see, I am not really able to maintain this repo or help with the issues properly.
+
+I (still :P) don't have a Powerwall, and I also never ended up using the Homebridge ecosystem myself.
+
+Thanks to all the people that helped me in the past!
+Especially getting the mandatory authentication working somehow back then would not have been possible.
+
+I hope that this repo is still useful, but I don't plan on commiting any more code; feel free to fork the repo.
+The code in here was started pre ECMAScript 6, and some of the dependencies might be a bit weird.
+But it seems to have mostly done its job.
+
+---
+
+
 # homebridge-tesla-powerwall
 [![npm](https://img.shields.io/npm/v/homebridge-tesla-powerwall.svg)](https://www.npmjs.com/package/homebridge-tesla-powerwall)
 [![npm](https://img.shields.io/npm/dt/homebridge-tesla-powerwall.svg)](https://www.npmjs.com/package/homebridge-tesla-powerwall)
